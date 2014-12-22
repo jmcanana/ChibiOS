@@ -74,6 +74,10 @@ uint8_t portd_channel_map[KINETIS_EXT_PORTD_WIDTH];
 #if KINETIS_EXT_PORTE_WIDTH > 0
 uint8_t porte_channel_map[KINETIS_EXT_PORTE_WIDTH];
 #endif
+#if KINETIS_EXT_PORTF_WIDTH > 0
+uint8_t portf_channel_map[KINETIS_EXT_PORTF_WIDTH];
+#endif
+
 
 /*===========================================================================*/
 /* Driver local functions.                                                   */
@@ -101,6 +105,10 @@ static void ext_lld_exti_irq_enable(void) {
 #if KINETIS_EXT_PORTE_WIDTH > 0
   nvicEnableVector(PINE_IRQn, KINETIS_EXT_PORTE_IRQ_PRIORITY);
 #endif
+#if KINETIS_EXT_PORTF_WIDTH > 0
+  nvicEnableVector(PINF_IRQn, KINETIS_EXT_PORTF_IRQ_PRIORITY);
+#endif
+
 }
 
 /**
@@ -124,6 +132,9 @@ static void ext_lld_exti_irq_disable(void) {
 #endif
 #if KINETIS_EXT_PORTE_WIDTH > 0
   nvicDisableVector(PINE_IRQn);
+#endif
+#if KINETIS_EXT_PORTF_WIDTH > 0
+  nvicDisableVector(PINF_IRQn);
 #endif
 }
 
@@ -223,6 +234,22 @@ CH_IRQ_HANDLER(KINETIS_PORTE_IRQ_VECTOR) {
 }
 #endif /* KINETIS_EXT_PORTE_WIDTH > 0 */
 
+/**
+ * @brief   PORTF interrupt handler.
+ *
+ * @isr
+ */
+#if defined(KINETIS_PORTF_IRQ_VECTOR) && KINETIS_EXT_PORTF_WIDTH > 0
+CH_IRQ_HANDLER(KINETIS_PORTF_IRQ_VECTOR) {
+  OSAL_IRQ_PROLOGUE();
+
+  irq_handler(PORTF, KINETIS_EXT_PORTF_WIDTH, portf_channel_map);
+
+  OSAL_IRQ_EPILOGUE();
+}
+#endif /* KINETIS_EXT_PORTF_WIDTH > 0 */
+
+
 /*===========================================================================*/
 /* Driver exported functions.                                                */
 /*===========================================================================*/
@@ -283,6 +310,12 @@ void ext_lld_start(EXTDriver *extp) {
       porte_channel_map[pin] = channel;
     else
 #endif
+#if KINETIS_EXT_PORTF_WIDTH > 0
+    if (port == PORTF)
+      portf_channel_map[pin] = channel;
+    else
+#endif
+
     {}
 
     if (mode & EXT_CH_MODE_AUTOSTART)

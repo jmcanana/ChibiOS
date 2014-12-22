@@ -84,6 +84,14 @@
 #if !defined(KINETIS_EXT_PORTE_IRQ_PRIORITY) || defined(__DOXYGEN__)
 #define KINETIS_EXT_PORTE_IRQ_PRIORITY       3
 #endif
+
+/**
+ * @brief   PORTF interrupt priority level setting.
+ */
+#if !defined(KINETIS_EXT_PORTE_IRQ_PRIORITY) || defined(__DOXYGEN__)
+#define KINETIS_EXT_PORTF_IRQ_PRIORITY       3
+#endif
+
 /** @} */
 /*===========================================================================*/
 /* Derived constants and error checks.                                       */
