@@ -17,17 +17,17 @@
 #include "ch.h"
 #include "hal.h"
 
-/* Triggered when the button is pressed. The blue led is toggled. */
+/* Triggered when the button is pressed. The green led is toggled. */
 static void extcb1(EXTDriver *extp, expchannel_t channel) {
   (void)extp;
   (void)channel;
 
-  palTogglePad(IOPORT4, 4);
+  palTogglePad(IOPORT1, 29);
 }
 
 static const EXTConfig extcfg = {
   {
-   {EXT_CH_MODE_FALLING_EDGE | EXT_CH_MODE_AUTOSTART, extcb1, PORTA, 1}
+   {EXT_CH_MODE_FALLING_EDGE | EXT_CH_MODE_AUTOSTART, extcb1, PORTA, 19}
   }
 };
 
@@ -46,17 +46,19 @@ int main(void) {
   halInit();
   chSysInit();
 
-  palSetPad(IOPORT3, 3);    // Red
-  palSetPad(IOPORT4, 4);    // Green
-  palSetPad(IOPORT1, 2);    // Blue
+  palSetPad(IOPORT1, 11);    // Orange
+  palSetPad(IOPORT1, 28);    // Yellow
+  palSetPad(IOPORT1, 29);    // Green
+  palSetPad(IOPORT1, 10);    // Blue
 
   /*
    * Activates the EXT driver 1.
    */
-  palSetPadMode(IOPORT1, 1, PAL_MODE_INPUT_PULLUP);
+  palSetPadMode(IOPORT1, 19, PAL_MODE_INPUT_PULLUP);
   extStart(&EXTD1, &extcfg);
 
   while (1) {
-    chThdSleepMilliseconds(500);
+      palTogglePad(IOPORT1, 10);
+      chThdSleepMilliseconds(1000);
   }
 }

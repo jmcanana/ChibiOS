@@ -132,7 +132,7 @@ typedef struct {
 /**
  * @brief   GPIO port F identifier.
  */
-#define IOPORT5          GPIOF
+#define IOPORT6          GPIOF
 
 
 /*===========================================================================*/

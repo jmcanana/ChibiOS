@@ -14,7 +14,7 @@
     limitations under the License.
 */
 
-#define K20x_MCUCONF
+#define K60x_MCUCONF
 
 /*
  * HAL driver system settings.
@@ -25,15 +25,15 @@
 /* Disable all clock intialization */
 #define KINETIS_NO_INIT             FALSE
 
-/* PEE mode - external 8 MHz crystal with PLL for 48 MHz core/system clock. */
-#if 1
+/* PEE mode - external 50 MHz crystal with PLL for 48 MHz core/system clock. */
+#if 0
 #define KINETIS_MCG_MODE            KINETIS_MCG_MODE_PEE
-#define KINETIS_XTAL_FREQUENCY      8000000UL
-#define KINETIS_SYSCLK_FREQUENCY    48000000UL
+#define KINETIS_XTAL_FREQUENCY      50000000UL
+#define KINETIS_SYSCLK_FREQUENCY    128000000UL
 #endif
 
 /* FEI mode - 48 MHz with internal 32.768 kHz crystal */
-#if 0
+#if 1
 #define KINETIS_MCG_MODE            KINETIS_MCG_MODE_FEI
 #define KINETIS_MCG_FLL_DMX32       1           /* Fine-tune for 32.768 kHz */
 #define KINETIS_MCG_FLL_DRS         1           /* 1464x FLL factor */
@@ -66,7 +66,7 @@
 /*
  * SERIAL driver system settings.
  */
-#define KINETIS_SERIAL_USE_UART0              TRUE
+#define KINETIS_SERIAL_USE_UART1              TRUE
 
 /*
  * EXTI driver system settings.
@@ -77,6 +77,7 @@
 #define KINETIS_EXT_PORTC_IRQ_PRIORITY          3
 #define KINETIS_EXT_PORTD_IRQ_PRIORITY          3
 #define KINETIS_EXT_PORTE_IRQ_PRIORITY          3
+#define KINETIS_EXT_PORTF_IRQ_PRIORITY          3
 
 /*
  * Processor specific widths of each port.
@@ -94,18 +95,20 @@
 #define KINETIS_EXT_PORTE_WIDTH                 0
 #endif
 
+#if 0
 /* MK20 64pin  */
 #define KINETIS_EXT_PORTA_WIDTH                 20
 #define KINETIS_EXT_PORTB_WIDTH                 20
 #define KINETIS_EXT_PORTC_WIDTH                 12
 #define KINETIS_EXT_PORTD_WIDTH                 8
 #define KINETIS_EXT_PORTE_WIDTH                 2
+#define KINETIS_EXT_PORTF_WIDTH                 2
+#endif
 
-#if 0
-/* MK20 144pin  */
+/* MK60 144pin  */
 #define KINETIS_EXT_PORTA_WIDTH                 30
 #define KINETIS_EXT_PORTB_WIDTH                 24
 #define KINETIS_EXT_PORTC_WIDTH                 20
 #define KINETIS_EXT_PORTD_WIDTH                 16
-#define KINETIS_EXT_PORTE_WIDTH                 13
-#endif
+#define KINETIS_EXT_PORTE_WIDTH                 29
+#define KINETIS_EXT_PORTF_WIDTH                  0
