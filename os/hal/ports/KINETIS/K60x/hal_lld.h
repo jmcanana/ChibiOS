@@ -32,8 +32,14 @@
 /* Driver constants.                                                         */
 /*===========================================================================*/
 
-/**
- * @brief   Defines the support for realtime counters in the HAL.
+/*******************************************************************************
+*  FLL-              |OUTDIV1---Core/System Clocks  [<=150 MHz]
+*      \__MCGOUTCLK__|OUTDIV2---Bus Clock           [Core Clock/integer, <=75MHz]
+*      /             |OUTDIV3---FlexBus Clock       [<=50MHz]
+*  PLL-              |OUTDIV4---Flash Clock         [Bus Clock/integer, <=25MHz]
+*
+*******************************************************************************/
+/* @brief   Defines the support for realtime counters in the HAL.
  */
 #define HAL_IMPLEMENTS_COUNTERS FALSE
 
@@ -47,12 +53,23 @@
 /**
  * @brief   Maximum system and core clock (f_SYS) frequency.
  */
-#define KINETIS_SYSCLK_MAX      128000000
+#define KINETIS_SYSCLK_MAX      150000000
 
 /**
  * @brief   Maximum bus clock (f_BUS) frequency.
  */
-#define KINETIS_BUSCLK_MAX      64000000
+#define KINETIS_BUSCLK_MAX      75000000
+
+/**
+ * @brief   Maximum FlexFus clock (FB_CLK) frequency.
+ */
+#define KINETIS_FB_CLK_MAX      50000000
+
+/**
+ * @brief   Maximum Flash clock frequency.
+ */
+#define KINETIS_FLASH_CLK_MAX   25000000
+
 
 /**
  * @name    Internal clock sources
@@ -94,25 +111,75 @@
 #endif
 
 /**
- * @brief   Clock divider for core/system and bus/flash clocks (OUTDIV1).
- * @note    The allowed range is 1...16.
- * @note    The default value is calculated for a 64 MHz system clock
- *          from a 128 MHz PLL output.
+ * @brief   MCG PLLO Source selection.
  */
-#if !defined(KINETIS_MCG_FLL_OUTDIV1) || defined(__DOXYGEN__)
-#define KINETIS_MCG_FLL_OUTDIV1     2
+#if !defined(KINETIS_MCG_PLLREFSEL0) || defined(__DOXYGEN__)
+#define KINETIS_MCG_PLLREFSEL0          0
+#endif
+
+
+/**
+ * @brief   Clock divider for PLL input (PRDIV0).
+ * @note    The allowed range is 1...8.
+ * @note    The default value is calculated for a 10 MHz PLL input
+ *          from a 50 MHz crystal.
+ */
+#if !defined(KINETIS_MCG_PRDIV0) || defined(__DOXYGEN__)
+#define KINETIS_MCG_PRDIV0    5
 #endif
 
 /**
- * @brief   Additional clock divider bus/flash clocks (OUTDIV4).
- * @note    The allowed range is 1...8.
- * @note    This divider is on top of the OUTDIV1 divider.
- * @note    The default value is calculated for 32 MHz bus/flash clocks
- *          from a 128 MHz PLL output and 64 MHz core/system clock.
+ * @brief   Clock multiplier for PLL output (VDIV0).
+ * @note    The allowed range is 16...47.
+ * @note    The default value is calculated for a 240 MHz PLL ouput
+ *          from a 10 MHz input.
  */
-#if !defined(KINETIS_MCG_FLL_OUTDIV4) || defined(__DOXYGEN__)
-#define KINETIS_MCG_FLL_OUTDIV4     2
+#if !defined(KINETIS_MCG_VDIV0) || defined(__DOXYGEN__)
+#define KINETIS_MCG_VDIV0    24
 #endif
+
+
+/**
+ * @brief   Clock divider for core/system (OUTDIV1).
+ * @note    The allowed range is 1...16.
+ * @note    The default value is calculated for a 120 MHz system clock
+ *          from a 240 MHz PLL output.
+ */
+#if !defined(KINETIS_MCG_OUTDIV1) || defined(__DOXYGEN__)
+#define KINETIS_MCG_OUTDIV1     2
+#endif
+
+/**
+ * @brief   Clock divider for core/system and bus/flash clocks (OUTDIV2).
+ * @note    The allowed range is 1...16.
+ * @note    The default value is calculated for a 60 MHz system clock
+ *          from a 240 MHz PLL output.
+ */
+#if !defined(KINETIS_MCG_OUTDIV2) || defined(__DOXYGEN__)
+#define KINETIS_MCG_OUTDIV2     4
+#endif
+
+/**
+ * @brief   Clock divider for flexBus clocks (OUTDIV3).
+ * @note    The allowed range is 1...16.
+ * @note    The default value is calculated for a 48 MHz flexBus clock
+ *          from a 240 MHz PLL output.
+ */
+#if !defined(KINETIS_MCG_OUTDIV3) || defined(__DOXYGEN__)
+#define KINETIS_MCG_OUTDIV3     5
+#endif
+
+/**
+ * @brief   Clock divider for flexBus clocks (OUTDIV4).
+ * @note    The allowed range is 1...16.
+ * @note    The default value is calculated for a 20 MHz flash clock
+ *          from a 240 MHz PLL output.
+ */
+#if !defined(KINETIS_MCG_OUTDIV4) || defined(__DOXYGEN__)
+#define KINETIS_MCG_OUTDIV4    12
+#endif
+
+
 
 /**
  * @brief   FLL DCO tuning enable for 32.768 kHz reference.
@@ -140,18 +207,18 @@
  * @brief   MCU system/core clock frequency.
  */
 #if !defined(KINETIS_SYSCLK_FREQUENCY) || defined(__DOXYGEN__)
-#define KINETIS_SYSCLK_FREQUENCY    64000000UL
+#define KINETIS_SYSCLK_FREQUENCY    120000000UL
 #endif
 
 /**
  * @brief   MCU bus/flash clock frequency.
  */
 #if !defined(KINETIS_BUSCLK_FREQUENCY) || defined(__DOXYGEN__)
-#define KINETIS_BUSCLK_FREQUENCY    (KINETIS_SYSCLK_FREQUENCY / KINETIS_MCG_FLL_OUTDIV4)
+#define KINETIS_BUSCLK_FREQUENCY    (KINETIS_SYSCLK_FREQUENCY / KINETIS_MCG_OUTDIV4)
 #endif
 
 /**
- * @brief   UART0 clock frequency.
+ * @brief   UART0 and UART1 clock frequency.
  * @note    The default value is based on 128 MHz PLL/2 source.
  *          If you use a different source, such as the FLL,
  *          you must set this properly.
@@ -159,13 +226,20 @@
 #if !defined(KINETIS_UART0_CLOCK_FREQ) || defined(__DOXYGEN__)
 #define KINETIS_UART0_CLOCK_FREQ    KINETIS_SYSCLK_FREQUENCY
 #endif
+#if !defined(KINETIS_UART1_CLOCK_FREQ) || defined(__DOXYGEN__)
+#define KINETIS_UART1_CLOCK_FREQ    KINETIS_SYSCLK_FREQUENCY
+#endif
+
 
 /**
- * @brief   UART0 clock source.
+ * @brief   UART0 and UART1 clock source.
  * @note    The default value is to use PLL/2 or FLL source.
  */
 #if !defined(KINETIS_UART0_CLOCK_SRC) || defined(__DOXYGEN__)
 #define KINETIS_UART0_CLOCK_SRC     1
+#endif
+#if !defined(KINETIS_UART1_CLOCK_SRC) || defined(__DOXYGEN__)
+#define KINETIS_UART1_CLOCK_SRC     1
 #endif
 
 /** @} */
@@ -190,14 +264,32 @@
 #error KINETIS_BUSCLK_FREQUENCY out of range
 #endif
 
-#if !(defined(KINETIS_MCG_FLL_OUTDIV1) && \
-      KINETIS_MCG_FLL_OUTDIV1 >= 1 && KINETIS_MCG_FLL_OUTDIV1 <= 16)
+#if KINETIS_FB_CLK_FREQUENCY <= 0 || KINETIS_FB_CLK_FREQUENCY > KINETIS_FB_CLK_MAX
+#error KINETIS_FB_CLK_FREQUENCY out of range
+#endif
+
+#if KINETIS_FLASH_CLK_FREQUENCY <= 0 || KINETIS_FLASH_CLK_FREQUENCY > KINETIS_FLASH_CLK_MAX
+#error KINETIS_FLASH_CLK_FREQUENCY out of range
+#endif
+
+
+
+#if !(defined(KINETIS_MCG_OUTDIV1) && \
+      KINETIS_MCG_OUTDIV1 >= 1 && KINETIS_MCG_OUTDIV1 <= 16)
 #error KINETIS_MCG_FLL_OUTDIV1 must be 1 through 16
 #endif
 
-#if !(defined(KINETIS_MCG_FLL_OUTDIV4) && \
-      KINETIS_MCG_FLL_OUTDIV4 >= 1 && KINETIS_MCG_FLL_OUTDIV4 <= 8)
-#error KINETIS_MCG_FLL_OUTDIV4 must be 1 through 8
+#if !(defined(KINETIS_MCG_OUTDIV2) && \
+      KINETIS_MCG_OUTDIV2 >= 1 && KINETIS_MCG_OUTDIV2 <= 16)
+#error KINETIS_MCG_FLL_OUTDIV1 must be 1 through 16
+#endif
+#if !(defined(KINETIS_MCG_OUTDIV3) && \
+      KINETIS_MCG_OUTDIV3 >= 1 && KINETIS_MCG_OUTDIV3 <= 16)
+#error KINETIS_MCG_FLL_OUTDIV1 must be 1 through 16
+#endif
+#if !(defined(KINETIS_MCG_OUTDIV4) && \
+      KINETIS_MCG_OUTDIV4 >= 1 && KINETIS_MCG_OUTDIV4 <= 16)
+#error KINETIS_MCG_FLL_OUTDIV1 must be 1 through 16
 #endif
 
 #if !(KINETIS_MCG_FLL_DMX32 == 0 || KINETIS_MCG_FLL_DMX32 == 1)

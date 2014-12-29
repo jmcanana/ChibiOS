@@ -693,6 +693,7 @@ typedef struct {
 #define WDOG_BASE               ((uint32_t)0x40052000)
 #define MCG_BASE                ((uint32_t)0x40064000)
 #define OSC0_BASE               ((uint32_t)0x40065000)
+#define OSC1_BASE               ((uint32_t)0x400E5000)
 #define I2C0_BASE               ((uint32_t)0x40066000)
 #define I2C1_BASE               ((uint32_t)0x40067000)
 #define UART0_BASE              ((uint32_t)0x4006A000)
@@ -740,6 +741,7 @@ typedef struct {
 #define USBOTG                  ((USBOTG_TypeDef *)  USBOTG_BASE)
 #define MCG                     ((MCG_TypeDef  *)    MCG_BASE)
 #define OSC                     ((OSC_TypeDef  *)    OSC0_BASE)
+#define OSC1                    ((OSC_TypeDef  *)    OSC1_BASE)
 #define SPI0                    ((SPI_TypeDef *)     SPI0_BASE)
 #define SPI1                    ((SPI_TypeDef *)     SPI1_BASE)
 #define SPI2                    ((SPI_TypeDef *)     SPI2_BASE)
@@ -793,6 +795,12 @@ typedef struct {
 #define SIM_SOPT2_CLKOUTSEL(x)       ((uint32_t)(((uint32_t)(x) << SIM_SOPT2_CLKOUTSEL_SHIFT) & SIM_SOPT2_CLKOUTSEL_MASK))
 #define SIM_SOPT2_RTCCLKOUTSEL       ((uint32_t)0x00000010)    /*!< RTC clock out select */
 
+/*******  Bits definition for SIM_SCGC1 register  ************/
+#define SIM_SCGC1_UART5              ((uint32_t)0x00000800)    /*!< UART5 Clock Gate Control */
+#define SIM_SCGC1_UART4              ((uint32_t)0x00000400)    /*!< UART4 Clock Gate Control */
+
+#define SIM_SCGC1_OSC1               ((uint32_t)0x00000020)    /*!< OSC1_Gate Control */
+
 /*******  Bits definition for SIM_SCGC4 register  ************/
 #define SIM_SCGC4_VREF               ((uint32_t)0x00100000)    /*!< VREF Clock Gate Control */
 #define SIM_SCGC4_CMP                ((uint32_t)0x00080000)    /*!< Comparator Clock Gate Control */
@@ -829,7 +837,9 @@ typedef struct {
 #define SIM_SCGC6_FTFL               ((uint32_t)0x00000001)    /*!< Flash Memory Clock Gate Control */
 
 /*******  Bits definition for SIM_SCGC6 register  ************/
+#define SIM_SCGC7_MPU                ((uint32_t)0x00000004)    /*!< MPU Clock Gate Control */
 #define SIM_SCGC7_DMA                ((uint32_t)0x00000002)    /*!< DMA Clock Gate Control */
+#define SIM_SCGC7_FLEXBUS            ((uint32_t)0x00000001)    /*!< FlexBus Clock Gate Control */
 
 /******  Bits definition for SIM_CLKDIV1 register  ***********/
 #define SIM_CLKDIV1_OUTDIV1_SHIFT    28
@@ -838,8 +848,11 @@ typedef struct {
 #define SIM_CLKDIV1_OUTDIV2_SHIFT    24
 #define SIM_CLKDIV1_OUTDIV2_MASK     ((uint32_t)((uint32_t)0xF << SIM_CLKDIV1_OUTDIV2_SHIFT))
 #define SIM_CLKDIV1_OUTDIV2(x)       ((uint32_t)(((uint32_t)(x) << SIM_CLKDIV1_OUTDIV2_SHIFT) & SIM_CLKDIV1_OUTDIV2_MASK))
+#define SIM_CLKDIV1_OUTDIV3_SHIFT    20
+#define SIM_CLKDIV1_OUTDIV3_MASK     ((uint32_t)((uint32_t)0xF << SIM_CLKDIV1_OUTDIV3_SHIFT))
+#define SIM_CLKDIV1_OUTDIV3(x)       ((uint32_t)(((uint32_t)(x) << SIM_CLKDIV1_OUTDIV3_SHIFT) & SIM_CLKDIV1_OUTDIV3_MASK))
 #define SIM_CLKDIV1_OUTDIV4_SHIFT    16
-#define SIM_CLKDIV1_OUTDIV4_MASK     ((uint32_t)((uint32_t)0x7 << SIM_CLKDIV1_OUTDIV4_SHIFT))
+#define SIM_CLKDIV1_OUTDIV4_MASK     ((uint32_t)((uint32_t)0xF << SIM_CLKDIV1_OUTDIV4_SHIFT))
 #define SIM_CLKDIV1_OUTDIV4(x)       ((uint32_t)(((uint32_t)(x) << SIM_CLKDIV1_OUTDIV4_SHIFT) & SIM_CLKDIV1_OUTDIV4_MASK))
 
 /******  Bits definition for SIM_CLKDIV2 register  ***********/
@@ -2111,6 +2124,10 @@ typedef struct {
 #define MCG_C5_PLLSTEN0             ((uint8_t)0x20) /*!< PLL Stop Enable */
 #define MCG_C5_PRDIV0_MASK          ((uint8_t)0x1F) /*!< PLL External Reference Divider (mask) */
 #define MCG_C5_PRDIV0(x)            ((uint8_t)((uint8_t)(x) & MCG_C5_PRDIV0_MASK))  /*!< PLL External Reference Divider */
+#define MCG_C5_PLLREFSEL0_SHIFT     7               /*!< PLL0 External Reference Select (shift) */
+#define MCG_C5_PLLREFSEL0_MASK      ((uint8_t)((uint8_t)0x1 << MCG_C5_PLLREFSEL0_SHIFT))   /*!< PLL0 External Reference Select (shift) */
+#define MCG_C5_PLLREFSEL0(x)        ((uint8_t)(((uint8_t)(x) << MCG_C5_PLLREFSEL0_SHIFT) & MCG_C5_PLLREFSEL0_MASK))  /*!< PLL0 External Reference Select Setting */
+
 
 /***********  Bits definition for MCG_C6 register  **************/
 #define MCG_C6_LOLIE0               ((uint8_t)0x80) /*!< Loss of Lock Interrupt Enable */
@@ -2160,6 +2177,22 @@ typedef struct {
 #define MCG_C8_LOLRE                ((uint8_t)0x40)   /*!< PLL Loss of Lock Reset Enable */
 #define MCG_C8_CME1                 ((uint8_t)0x20)   /*!< PLL Clock Monitor Enable */
 #define MCG_C8_LOCS1                ((uint8_t)0x01)   /*!< RTC Loss of Clock Status */
+
+/***********  Bits definition for MCG_C10 register  **************/
+#define MCG_C10_LOCRE2               ((uint8_t)0x80) /*!< OSC1 Loss of Clock Reset Enable */
+#define MCG_C10_RANGE1_SHIFT         4               /*!< Frequency Range Select (shift) */
+#define MCG_C10_RANGE1_MASK          ((uint8_t)((uint8_t)0x3 << MCG_C10_RANGE1_SHIFT))  /*!< Frequency Range Select (mask) */
+#define MCG_C10_RANGE1(x)            ((uint8_t)(((uint8_t)(x) << MCG_C10_RANGE1_SHIFT) & MCG_C10_RANGE1_MASK))  /*!< Frequency Range Select */
+#define MCG_C10_HGO1                 ((uint8_t)0x08) /*!< High Gain Oscillator Select (0=low power; 1=high gain) */
+#define MCG_C10_EREFS1               ((uint8_t)0x04) /*!< External Reference Select (0=clock; 1=oscillator) */
+
+/************  Bits definition for MCG_S2 register  **************/
+#define MCG_S2_LOLS1                 ((uint8_t)0x80) /*!< PLL1 Loss of Lock Status */
+#define MCG_S2_LOCK1                 ((uint8_t)0x40) /*!< PLL1 Lock Status */
+#define MCG_S2_PLLCST                ((uint8_t)0x10) /*!< PLLCS Source Status */
+#define MCG_S2_OSCINIT1              ((uint8_t)0x02)  /*!< OSC1 Initialization */
+#define MCG_S2_LOCS2                 ((uint8_t)0x01)  /*!< OSC1 Loss of Clock Status */
+
 
 /****************************************************************/
 /*                                                              */

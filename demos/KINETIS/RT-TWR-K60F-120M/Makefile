@@ -5,7 +5,7 @@
 
 # Compiler options here.
 ifeq ($(USE_OPT),)
-  USE_OPT = -O0 -ggdb -fomit-frame-pointer -falign-functions=16 -DCRT0_INIT_STACKS=0 -std=gnu99
+  USE_OPT = -O0 -ggdb3 -fomit-frame-pointer -falign-functions=16 -DCRT0_INIT_STACKS=0 -std=gnu99
 #  USE_OPT = -O2 -ggdb -fomit-frame-pointer -falign-functions=16
 endif
 

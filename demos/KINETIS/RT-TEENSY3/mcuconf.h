@@ -23,7 +23,7 @@
 /* Select the MCU clocking mode below by enabling the appropriate block. */
 
 /* FEI mode */
-#if 0
+#if 1
 #define KINETIS_MCG_MODE            KINETIS_MCG_MODE_FEI
 #define KINETIS_SYSCLK_FREQUENCY    21000000UL
 #endif /* 0 */

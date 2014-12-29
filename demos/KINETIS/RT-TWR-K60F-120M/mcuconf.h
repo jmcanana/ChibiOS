@@ -25,15 +25,42 @@
 /* Disable all clock intialization */
 #define KINETIS_NO_INIT             FALSE
 
-/* PEE mode - external 50 MHz crystal with PLL for 48 MHz core/system clock. */
-#if 0
-#define KINETIS_MCG_MODE            KINETIS_MCG_MODE_PEE
-#define KINETIS_XTAL_FREQUENCY      50000000UL
-#define KINETIS_SYSCLK_FREQUENCY    128000000UL
+/* PEE mode - external 50 MHz crystal with PLL for 128 MHz core/system clock. */
+#if 1
+/*******************************************************************************
+*  FLL-              |OUTDIV1---Core/System Clocks  [<=150 MHz]
+*      \__MCGOUTCLK__|OUTDIV2---Bus Clock           [Core Clock/integer, <=75MHz]
+*      /             |OUTDIV3---FlexBus Clock       [<=50MHz]
+*  PLL-              |OUTDIV4---Flash Clock         [Bus Clock/integer, <=25MHz]
+*
+*******************************************************************************/
+#define KINETIS_MCG_MODE             KINETIS_MCG_MODE_PEE
+#define KINETIS_MCG_PLLREFSEL0       1 /* 12 MHz Crystal */
+#define KINETIS_XTAL_FREQUENCY       12000000UL
+#define KINETIS_SYSCLK_FREQUENCY    120000000UL
+#define KINETIS_BUSCLK_FREQUENCY     60000000UL
+#define KINETIS_FB_CLK_FREQUENCY     48000000UL
+#define KINETIS_FLASH_CLK_FREQUENCY  20000000UL
+
+#define KINETIS_MCG_PRDIV0       1  /* 12/1 =  12 MHz PLL input */
+#define KINETIS_MCG_VDIV0        40 /* 20X  = 240 MHz PLL output */
+
+/* It looks like there is a /2 somewhere in the MCG that isn't
+ * clearly documented.  Maybe the /2 shown in Fig 25-1 of
+ * K60P144M150SF3RM.pdf?
+ *
+ * To account for this, VDIV0 has been doubled from 20x to 40x.
+ *
+ */
+
+#define KINETIS_MCG_OUTDIV1      2 /* System clock 120 MHz */
+#define KINETIS_MCG_OUTDIV2      4 /* Bus clock 60 MHz */
+#define KINETIS_MCG_OUTDIV3      5 /* FlexBus 48 MHz */
+#define KINETIS_MCG_OUTDIV4     12 /* Flash clock 20 MHz */
 #endif
 
 /* FEI mode - 48 MHz with internal 32.768 kHz crystal */
-#if 1
+#if 0
 #define KINETIS_MCG_MODE            KINETIS_MCG_MODE_FEI
 #define KINETIS_MCG_FLL_DMX32       1           /* Fine-tune for 32.768 kHz */
 #define KINETIS_MCG_FLL_DRS         1           /* 1464x FLL factor */
@@ -66,7 +93,8 @@
 /*
  * SERIAL driver system settings.
  */
-#define KINETIS_SERIAL_USE_UART1              TRUE
+#define KINETIS_SERIAL_USE_UART5              TRUE
+
 
 /*
  * EXTI driver system settings.

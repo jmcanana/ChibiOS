@@ -121,27 +121,53 @@ void mk60f120_clock_init(void) {
 
 #if KINETIS_MCG_MODE == KINETIS_MCG_MODE_PEE
 
+#if 0
+  /* This should be handled correctly in your board file.
+   * For example, If you are using an external clock you
+   * may want to use pad 19 as a GPIO. */
   /* EXTAL0 and XTAL0 */
   PORTA->PCR[18] = 0;
   PORTA->PCR[19] = 0;
+#endif
 
   /*
    * Start in FEI mode
    */
 
   /* Disable capacitors for crystal */
-  OSC->CR = 0;
+  if (KINETIS_MCG_PLLREFSEL0 == 1) {
+      SIM->SCGC1 |= SIM_SCGC1_OSC1;
+      OSC1->CR= 0x80;
+  }
+  else {
+      OSC->CR = 0x80;
+      SIM->SCGC1 &= ~SIM_SCGC1_OSC1;
+  }
+
 
   /* TODO: need to add more flexible calculation, specially regarding
    *       divisors which may not be available depending on the XTAL
    *       frequency, which would required other registers to be modified.
    */
   /* Enable OSC, low power mode */
-  MCG->C2 = MCG_C2_LOCRE0 | MCG_C2_EREFS0;
-  if (KINETIS_XTAL_FREQUENCY > 8000000)
-    MCG->C2 |= MCG_C2_RANGE0(2);
-  else
-    MCG->C2 |= MCG_C2_RANGE0(1);
+  if (KINETIS_MCG_PLLREFSEL0 == 1) {
+      MCG->C10 = MCG_C10_LOCRE2 | MCG_C10_EREFS1;
+      if (KINETIS_XTAL_FREQUENCY > 8000000) {
+          MCG->C10 |= MCG_C10_RANGE1(2);
+      }
+      else {
+          MCG->C10 |= MCG_C10_RANGE1(1);
+      }
+  }
+  else {
+      MCG->C2 = MCG_C2_LOCRE0 | MCG_C2_EREFS0;
+      if (KINETIS_XTAL_FREQUENCY > 8000000) {
+          MCG->C2 |= MCG_C2_RANGE0(2);
+      }
+      else {
+          MCG->C2 |= MCG_C2_RANGE0(1);
+      }
+  }
 
   frdiv = 5;
   ratio = KINETIS_XTAL_FREQUENCY / 31250;
@@ -155,26 +181,56 @@ void mk60f120_clock_init(void) {
   /* Switch to crystal as clock source, FLL input of 31.25 KHz */
   MCG->C1 = MCG_C1_CLKS(2) | MCG_C1_FRDIV(frdiv);
 
-  /* Wait for crystal oscillator to begin */
-  while (!(MCG->S & MCG_S_OSCINIT0));
+  if (KINETIS_MCG_PLLREFSEL0 == 1) {
+      /* Wait for crystal oscillator to begin */
+      while (!(MCG->S2 & MCG_S2_OSCINIT1));
 
-  /* Wait for the FLL to use the oscillator */
-  while (MCG->S & MCG_S_IREFST);
+      /* Wait for the FLL to use the oscillator */
+      while (MCG->S & MCG_S_IREFST);
 
-  /* Wait for the MCGOUTCLK to use the oscillator */
-  while ((MCG->S & MCG_S_CLKST_MASK) != MCG_S_CLKST(2));
+      /* Wait for the MCGOUTCLK to use the oscillator */
+      while ((MCG->S & MCG_S_CLKST_MASK) != MCG_S_CLKST(2));
+  }
+  else {
+      /* Wait for crystal oscillator to begin */
+      while (!(MCG->S & MCG_S_OSCINIT0));
+
+      /* Wait for the FLL to use the oscillator */
+      while (MCG->S & MCG_S_IREFST);
+
+      /* Wait for the MCGOUTCLK to use the oscillator */
+      while ((MCG->S & MCG_S_CLKST_MASK) != MCG_S_CLKST(2));
+  }
 
   /*
    * Now in FBE mode
    */
 
-  /* Config PLL input for 8 MHz */
-  MCG->C5 = MCG_C5_PRDIV0((KINETIS_XTAL_FREQUENCY / 8000000) - 1);
+  /* Config PLL input for 8-16 MHz */
+  MCG->C5 = MCG_C5_PLLREFSEL0(KINETIS_MCG_PLLREFSEL0)
+          | MCG_C5_PRDIV0(KINETIS_MCG_PRDIV0 - 1);
+  /* Config PLL output */
+  MCG->C6 = MCG_C6_PLLS | MCG_C6_VDIV0(KINETIS_MCG_VDIV0 - 16);
 
-  /* Config PLL for 128 MHz output */
-  MCG->C6 = MCG_C6_PLLS | MCG_C6_VDIV0(0);
+  /*
+   * Make sure you divide down your bus and periferal clocks
+   * to allowable values before you go PEE, otherwise your
+   * board will take a sh!t...
+   *
+   * The MCGOUTCLK dividers:
+   * PLL/OUTDIV1 = Core
+   * PLL/OUTDIV2 = Bus
+   * PLL/OUTDIV3 = FlexBus
+   * PLL/OUTDIV4 = FlashClock
+   */
 
-  /* Wait for PLL to start using crystal as its input */
+  SIM->CLKDIV1 =
+      SIM_CLKDIV1_OUTDIV1(KINETIS_MCG_OUTDIV1  - 1) |
+      SIM_CLKDIV1_OUTDIV2(KINETIS_MCG_OUTDIV2  - 1) |
+      SIM_CLKDIV1_OUTDIV3(KINETIS_MCG_OUTDIV3  - 1) |
+      SIM_CLKDIV1_OUTDIV4(KINETIS_MCG_OUTDIV4 - 1);
+
+   /* Wait for PLL to start using crystal as its input */
   while (!(MCG->S & MCG_S_PLLST));
 
   /* Wait for PLL to lock */

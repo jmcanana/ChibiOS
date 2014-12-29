@@ -157,7 +157,7 @@ const PALConfig pal_default_config =
                 /* PTC0*/ PAL_MODE_UNCONNECTED,	    /* FB_AD14-NF_IO11/TSI0_CH13 */
                 /* PTC1*/ PAL_MODE_ALTERNATIVE_4,   /* FB_AD13-NF_IO10/TSI0_CH14/[FTM0_CH0] */
                 /* PTC2*/ PAL_MODE_ALTERNATIVE_4,   /* FB_AD12-NF_IO9/[FTM0_CH1]/TSI0_CH15 */
-                /* PTC3*/ PAL_MODE_ALTERNATIVE_4,   /* FB_CLKOUT/[FTM0_CH2] */
+                /* PTC3*/ PAL_MODE_ALTERNATIVE_5,   /* [CLKOUT]/FTM0_CH2 */
                 /* PTC4*/ PAL_MODE_UNCONNECTED,     /* FB_AD11-NF_IO8/DSPI_CS_N */
                 /* PTC5*/ PAL_MODE_UNCONNECTED,     /* FB_AD10-NF_IO7/DSPI_SCK */
                 /* PTC6*/ PAL_MODE_UNCONNECTED,     /* FB_AD9-NF_IO6/CMP_IN0 */
@@ -236,8 +236,8 @@ const PALConfig pal_default_config =
                 /* PTE5*/ PAL_MODE_UNCONNECTED,	    /* SDHC0_D2/GPIO_E5 */
                 /* PTE6*/ PAL_MODE_UNCONNECTED,	    /* GPIO_E6/I2S0_MCLK */
                 /* PTE7*/ PAL_MODE_UNCONNECTED,	    /* AUD_SDATAI/GPIO_E7 */
-                /* PTE8*/ PAL_MODE_UNCONNECTED,	    /* I2S0_RX_FS/UART5_TXD */
-                /* PTE9*/ PAL_MODE_UNCONNECTED,	    /* I2S0_RX_BCLK/UART5_RXD */
+                /* PTE8*/ PAL_MODE_ALTERNATIVE_3,   /* I2S0_RX_FS/[UART5_TXD] */
+                /* PTE9*/ PAL_MODE_ALTERNATIVE_3,   /* I2S0_RX_BCLK/[UART5_RXD] */
                 /*PTE10*/ PAL_MODE_UNCONNECTED,	    /* AUD_SDATAO/UART5_CTS_B */
                 /*PTE11*/ PAL_MODE_UNCONNECTED,	    /* I2S0_TX_FS/UART5_RTS_B */
                 /*PTE12*/ PAL_MODE_UNCONNECTED,	    /* I2S0_TX_BCLK/GPIO_E12 */
@@ -252,7 +252,7 @@ const PALConfig pal_default_config =
                 /*PTE21*/ PAL_MODE_UNCONNECTED,	    /* NC */
                 /*PTE22*/ PAL_MODE_UNCONNECTED,	    /* NC */
                 /*PTE23*/ PAL_MODE_UNCONNECTED,	    /* NC */
-                /*PTE24*/ PAL_MODE_UNCONNECTED,	    /* EXTAL1 */
+                /*PTE24*/ PAL_MODE_UNCONNECTED,	    /* [EXTAL1] */
                 /*PTE25*/ PAL_MODE_UNCONNECTED,	    /* XTAL1 */
                 /*PTE26*/ PAL_MODE_INPUT_PULLUP,    /* [Push_Button0]/RTC_CLKOUT/TWRPI_GPIO4 */
                 /*PTE27*/ PAL_MODE_UNCONNECTED,	    /* GPIO_E27 */

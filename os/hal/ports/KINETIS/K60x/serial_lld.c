@@ -72,7 +72,7 @@ SerialDriver SD6;
  * @brief   Driver default configuration.
  */
 static const SerialConfig default_config = {
-  115200
+  SERIAL_DEFAULT_BITRATE
 };
 
 /*===========================================================================*/
@@ -192,10 +192,17 @@ static void notify6(io_queue_t *qp)
  * @brief   Common UART configuration.
  *
  */
+
 static void configure_uart(UART_TypeDef *uart, const SerialConfig *config)
 {
-  uint32_t divisor = (KINETIS_SYSCLK_FREQUENCY * 2 + 1) / config->sc_speed;
+  uint32_t divisor;
 
+  if (uart == UART0 || uart == UART1) {
+      divisor = (KINETIS_SYSCLK_FREQUENCY * 2 + 1) / config->sc_speed;
+  }
+  else {
+      divisor = (KINETIS_BUSCLK_FREQUENCY * 2 + 1) / config->sc_speed;
+  }
   /* Disable UART while configuring */
   uart->C2 &= ~(UARTx_C2_RE | UARTx_C2_TE);
   uart->C1 = 0;
@@ -213,16 +220,16 @@ static void configure_uart(UART_TypeDef *uart, const SerialConfig *config)
 /*===========================================================================*/
 
 /* TODO:
- *   UART0_Error is VectorF8
- *   UART1_Error is Vector100
- *   UART2_Error is Vector108
- *   UART3_Error is Vector110
- *   UART4_Error is Vector118
- *   UART5_Error is Vector120
+ *   UART0_Status is VectorF4
+ *   UART1_Status is VectorFC
+ *   UART2_Status is Vector104
+ *   UART3_Status is Vector10C
+ *   UART4_Status is Vector114
+ *   UART5_Status is Vector11C
  */
 
 #if KINETIS_SERIAL_USE_UART0 || defined(__DOXYGEN__)
-CH_IRQ_HANDLER(VectorF8) {
+CH_IRQ_HANDLER(VectorF4) {
 
   CH_IRQ_PROLOGUE();
   serve_interrupt(&SD1);
@@ -231,7 +238,7 @@ CH_IRQ_HANDLER(VectorF8) {
 #endif
 
 #if KINETIS_SERIAL_USE_UART1 || defined(__DOXYGEN__)
-CH_IRQ_HANDLER(Vector100) {
+CH_IRQ_HANDLER(VectorFC) {
 
   CH_IRQ_PROLOGUE();
   serve_interrupt(&SD2);
@@ -240,6 +247,13 @@ CH_IRQ_HANDLER(Vector100) {
 #endif
 
 #if KINETIS_SERIAL_USE_UART2 || defined(__DOXYGEN__)
+CH_IRQ_HANDLER(Vector104) {
+
+  CH_IRQ_PROLOGUE();
+  serve_interrupt(&SD3);
+  CH_IRQ_EPILOGUE();
+}
+
 CH_IRQ_HANDLER(Vector108) {
 
   CH_IRQ_PROLOGUE();
@@ -249,6 +263,13 @@ CH_IRQ_HANDLER(Vector108) {
 #endif
 
 #if KINETIS_SERIAL_USE_UART3 || defined(__DOXYGEN__)
+CH_IRQ_HANDLER(Vector10C) {
+
+  CH_IRQ_PROLOGUE();
+  serve_interrupt(&SD4);
+  CH_IRQ_EPILOGUE();
+}
+
 CH_IRQ_HANDLER(Vector110) {
 
   CH_IRQ_PROLOGUE();
@@ -257,6 +278,13 @@ CH_IRQ_HANDLER(Vector110) {
 }
 #endif
 #if KINETIS_SERIAL_USE_UART4 || defined(__DOXYGEN__)
+CH_IRQ_HANDLER(Vector114) {
+
+  CH_IRQ_PROLOGUE();
+  serve_interrupt(&SD5);
+  CH_IRQ_EPILOGUE();
+}
+
 CH_IRQ_HANDLER(Vector118) {
 
   CH_IRQ_PROLOGUE();
@@ -265,7 +293,7 @@ CH_IRQ_HANDLER(Vector118) {
 }
 #endif
 #if KINETIS_SERIAL_USE_UART5 || defined(__DOXYGEN__)
-CH_IRQ_HANDLER(Vector120) {
+CH_IRQ_HANDLER(Vector11C) {
 
   CH_IRQ_PROLOGUE();
   serve_interrupt(&SD6);
