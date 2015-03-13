@@ -480,6 +480,39 @@ typedef struct {
   __I  uint32_t RXFR[4];            /**< DSPI Receive FIFO Registers, offset: 0x7C */
 } SPI_TypeDef;
 
+/** I2S - Peripheral register structure */
+typedef struct {
+  __IO uint32_t TCSR;               /**< I2S Transmit Control Register, offset: 0x0 */
+  __IO uint32_t TCR1;               /**< I2S Transmit Configuration 1 Register, offset: 0x4 */
+  __IO uint32_t TCR2;               /**< I2S Transmit Configuration 1 Register, offset: 0x8 */
+  __IO uint32_t TCR3;               /**< I2S Transmit Configuration 1 Register, offset: 0xc */
+  __IO uint32_t TCR4;               /**< I2S Transmit Configuration 1 Register, offset: 0x10 */
+  __IO uint32_t TCR5;               /**< I2S Transmit Configuration 1 Register, offset: 0x14 */
+       uint32_t RESERVED1[2];
+  __I  uint32_t TDR[2];             /**< I2S Transmit Data Registers, offset: 0x20 */
+       uint32_t RESERVED2[6];
+  __O  uint32_t TFR[2];             /**< I2S Transmit FIFO Registers, offset: 0x40 */
+       uint32_t RESERVED3[6];
+  __IO uint32_t TMR;                /**< I2S Transmit Mask Register, offset: 0x60 */
+       uint32_t RESERVED4[7];
+  __IO uint32_t RCSR;               /**< I2S Receive Control Register, offset: 0x80 */
+  __IO uint32_t RCR1;               /**< I2S Receive Configuration 1 Register, offset: 0x84 */
+  __IO uint32_t RCR2;               /**< I2S Receive Configuration 1 Register, offset: 0x88 */
+  __IO uint32_t RCR3;               /**< I2S Receive Configuration 1 Register, offset: 0x8C */
+  __IO uint32_t RCR4;               /**< I2S Receive Configuration 1 Register, offset: 0x90 */
+  __IO uint32_t RCR5;               /**< I2S Receive Configuration 1 Register, offset: 0x94 */
+       uint32_t RESERVED5[2];
+  __O  uint32_t RDR[2];             /**< I2S Receive Data Registers, offset: 0xA0 */
+       uint32_t RESERVED6[6];
+  __O  uint32_t RFR[2];             /**< I2S Receive FIFO Registers, offset: 0xC0 */
+       uint32_t RESERVED7[6];
+  __IO uint32_t RMR;                /**< I2S Receive Mask Register, offset: 0xE0 */
+       uint32_t RESERVED8[7];
+  __IO uint32_t MCR;                /**< I2S MCLK Control Register, offset: 0x100 */
+  __IO uint32_t MDR;                /**< I2S MCLK Divide Register, offset: 0x104 */
+} I2S_TypeDef;
+
+
 typedef struct
 {
   __IO uint8_t  A1;
@@ -702,6 +735,8 @@ typedef struct {
 #define UART3_BASE              ((uint32_t)0x4006D000)
 #define UART4_BASE              ((uint32_t)0x400EA000)
 #define UART5_BASE              ((uint32_t)0x400EB000)
+#define I2S0_BASE               ((uint32_t)0x4002F000)
+#define I2S1_BASE               ((uint32_t)0x400AF000)
 #define USBOTG_BASE             ((uint32_t)0x40072000)
 #define LLWU_BASE               ((uint32_t)0x4007C000)
 #define PMC_BASE                ((uint32_t)0x4007D000)
@@ -753,6 +788,8 @@ typedef struct {
 #define UART3                   ((UART_TypeDef *)    UART3_BASE)
 #define UART4                   ((UART_TypeDef *)    UART4_BASE)
 #define UART5                   ((UART_TypeDef *)    UART5_BASE)
+#define I2S0                    ((I2S_TypeDef  *)    I2S0_BASE)
+#define I2S1                    ((I2S_TypeDef  *)    I2S1_BASE)
 #define GPIOA                   ((GPIO_TypeDef  *)   GPIOA_BASE)
 #define GPIOB                   ((GPIO_TypeDef  *)   GPIOB_BASE)
 #define GPIOC                   ((GPIO_TypeDef  *)   GPIOC_BASE)
@@ -800,6 +837,9 @@ typedef struct {
 #define SIM_SCGC1_UART4              ((uint32_t)0x00000400)    /*!< UART4 Clock Gate Control */
 
 #define SIM_SCGC1_OSC1               ((uint32_t)0x00000020)    /*!< OSC1_Gate Control */
+
+/*******  Bits definition for SIM_SCGC3 register  ************/
+#define SIM_SCGC6_I2S1               ((uint32_t)0x00008000)    /*!< SPI1 Clock Gate Control */
 
 /*******  Bits definition for SIM_SCGC4 register  ************/
 #define SIM_SCGC4_VREF               ((uint32_t)0x00100000)    /*!< VREF Clock Gate Control */
@@ -2476,6 +2516,310 @@ typedef struct {
 #define UARTx_PFIFO_RXFIFOSIZE_SHIFT 0
 #define UARTx_PFIFO_RXFIFOSIZE_MASK  ((uint8_t)((uint8_t)0x7 << UARTx_PFIFO_RXFIFOSIZE_SHIFT))
 #define UARTx_PFIFO_RXFIFOSIZE(x)    ((uint8_t)(((uint8_t)(x) << UARTx_PFIFO_RXFIFOSIZE_SHIFT) & UARTx_PFIFO_RXFIFOSIZE_MASK))  /*!< Receive FIFO Buffer depth */
+
+/****************************************************************/
+/*                                                              */
+/*             Synchronous Audio Interface (I2S)                */
+/*                                                              */
+/****************************************************************/
+
+/***********  Bits definition for I2Sx_TCSR register  *************/
+#define I2Sx_TCSR_TE            ((uint32_t)0x80000000)
+#define I2Sx_TCSR_STOPE         ((uint32_t)0x40000000)
+#define I2Sx_TCSR_DBGE          ((uint32_t)0x20000000)
+#define I2Sx_TCSR_BCE           ((uint32_t)0x10000000)
+
+#define I2Sx_TCSR_FR            ((uint32_t)0x02000000)
+#define I2Sx_TCSR_SR            ((uint32_t)0x01000000)
+
+#define I2Sx_TCSR_WSF           ((uint32_t)0x00100000)
+#define I2Sx_TCSR_SEF           ((uint32_t)0x00080000)
+#define I2Sx_TCSR_FEF           ((uint32_t)0x00040000)
+#define I2Sx_TCSR_FWF           ((uint32_t)0x00020000)
+#define I2Sx_TCSR_FRF           ((uint32_t)0x00010000)
+
+
+#define I2Sx_TCSR_WSIE          ((uint32_t)0x00001000)
+#define I2Sx_TCSR_SEIE          ((uint32_t)0x00000800)
+#define I2Sx_TCSR_FEIE          ((uint32_t)0x00000400)
+#define I2Sx_TCSR_FWIE          ((uint32_t)0x00000200)
+#define I2Sx_TCSR_FRIE          ((uint32_t)0x00000100)
+
+#define I2Sx_TCSR_FWDE          ((uint32_t)0x00000002)
+#define I2Sx_TCSR_FRDE          ((uint32_t)0x00000001)
+
+/***********  Bits definition for I2Sx_TCR1 register  *************/
+#define I2Sx_TCR1_TFW_SHIFT     0
+#define I2Sx_TCR1_TFW_MASK     ((uint32_t)((uint32_t)0x7  \
+                                                      << I2Sx_TCR1_TFW_SHIFT))
+#define I2Sx_TCR1_TFW(x)       ((uint32_t)(((uint32_t)(x) \
+                                                      << I2Sx_TCR1_TFW_SHIFT) \
+                                                      & I2Sx_TCR1_TFW_MASK))
+/***********  Bits definition for I2Sx_TCR2 register  *************/
+#define I2Sx_TCR2_SYNC_SHIFT    30
+#define I2Sx_TCR2_SYNC_MASK     ((uint32_t)((uint32_t)0x3  \
+                                                      << I2Sx_TCR2_SYNC_SHIFT))
+#define I2Sx_TCR2_SYNC(x)       ((uint32_t)(((uint32_t)(x) \
+                                                      << I2Sx_TCR2_SYNC_SHIFT) \
+                                                       & I2Sx_TCR2_SYNC_MASK))
+#define I2Sx_TCR2_BCS           ((uint32_t)0x20000000)
+#define I2Sx_TCR2_BCI           ((uint32_t)0x10000000)
+#define I2Sx_TCR2_MSEL_SHIFT    26
+#define I2Sx_TCR2_MSEL_MASK     ((uint32_t)((uint32_t)0x3  \
+                                                      << I2Sx_TCR2_MSEL_SHIFT))
+#define I2Sx_TCR2_MSEL(x)       ((uint32_t)(((uint32_t)(x) \
+                                                      << I2Sx_TCR2_MSEL_SHIFT) \
+                                                       & I2Sx_TCR2_MSEL_MASK))
+
+#define I2Sx_TCR2_BCP           ((uint32_t)0x02000000)
+#define I2Sx_TCR2_BCD           ((uint32_t)0x01000000)
+
+#define I2Sx_TCR2_DIV_SHIFT    0
+#define I2Sx_TCR2_DIV_MASK     ((uint32_t)((uint32_t)0xFF \
+                                                      << I2Sx_TCR2_DIV_SHIFT))
+#define I2Sx_TCR2_DIV(x)       ((uint32_t)(((uint32_t)(x) \
+                                                      << I2Sx_TCR2_DIV_SHIFT) \
+                                                       & I2Sx_TCR2_DIV_MASK))
+
+
+/***********  Bits definition for I2Sx_TCR3 register  *************/
+#define I2Sx_TCR3_TCE_SHIFT    16
+#define I2Sx_TCR3_TCE_MASK     ((uint32_t)((uint32_t)0x3 \
+                                                      << I2Sx_TCR3_TCE_SHIFT))
+#define I2Sx_TCR3_TCE(x)       ((uint32_t)(((uint32_t)(x) \
+                                                      << I2Sx_TCR3_TCE_SHIFT) \
+                                                       & I2Sx_TCR3_TCE_MASK))
+
+#define I2Sx_TCR3_WDFL_SHIFT    0
+#define I2Sx_TCR3_WDFL_MASK     ((uint32_t)((uint32_t)0x1F \
+                                                      << I2Sx_TCR3_WDFL_SHIFT))
+#define I2Sx_TCR3_WDFL(x)       ((uint32_t)(((uint32_t)(x) \
+                                                      << I2Sx_TCR3_WDFL_SHIFT) \
+                                                       & I2Sx_TCR3_WDFL_MASK))
+
+
+
+/***********  Bits definition for I2Sx_TCR4 register  *************/
+#define I2Sx_TCR4_FRSZ_SHIFT    16
+#define I2Sx_TCR4_FRSZ_MASK     ((uint32_t)((uint32_t)0x1F \
+                                                      << I2Sx_TCR4_FRSZ_SHIFT))
+#define I2Sx_TCR4_FRSZ(x)       ((uint32_t)(((uint32_t)(x) \
+                                                      << I2Sx_TCR4_FRSZ_SHIFT) \
+                                                       & I2Sx_TCR4_FRSZ_MASK))
+
+#define I2Sx_TCR4_SYWD_SHIFT    8
+#define I2Sx_TCR4_SYWD_MASK     ((uint32_t)((uint32_t)0x1F \
+                                                      << I2Sx_TCR4_SYWD_SHIFT))
+#define I2Sx_TCR4_SYWD(x)       ((uint32_t)(((uint32_t)(x) \
+                                                      << I2Sx_TCR4_SYWD_SHIFT) \
+                                                       & I2Sx_TCR4_SYWD_MASK))
+#define I2Sx_TCR4_MF            ((uint32_t)0x00000010)
+#define I2Sx_TCR4_FSE           ((uint32_t)0x00000008)
+
+#define I2Sx_TCR4_FSP           ((uint32_t)0x00000002)
+#define I2Sx_TCR4_FSD           ((uint32_t)0x00000001)
+
+/***********  Bits definition for I2Sx_TCR5 register  *************/
+#define I2Sx_TCR5_WNW_SHIFT    24
+#define I2Sx_TCR5_WNW_MASK     ((uint32_t)((uint32_t)0x1F \
+                                                      << I2Sx_TCR5_WNW_SHIFT))
+#define I2Sx_TCR5_WNW(x)       ((uint32_t)(((uint32_t)(x) \
+                                                      << I2Sx_TCR5_WNW_SHIFT) \
+                                                       & I2Sx_TCR5_WNW_MASK))
+
+#define I2Sx_TCR5_WOW_SHIFT    16
+#define I2Sx_TCR5_WOW_MASK     ((uint32_t)((uint32_t)0x1F \
+                                                      << I2Sx_TCR5_WOW_SHIFT))
+#define I2Sx_TCR5_WOW(x)       ((uint32_t)(((uint32_t)(x) \
+                                                      << I2Sx_TCR5_WOW_SHIFT) \
+                                                       & I2Sx_TCR5_WOW_MASK))
+
+#define I2Sx_TCR5_FBT_SHIFT    8
+#define I2Sx_TCR5_FBT_MASK     ((uint32_t)((uint32_t)0x1F \
+                                                      << I2Sx_TCR5_FBT_SHIFT))
+#define I2Sx_TCR5_FBT(x)       ((uint32_t)(((uint32_t)(x) \
+                                                      << I2Sx_TCR5_FBT_SHIFT) \
+                                                       & I2Sx_TCR5_FBT_MASK))
+/***********  Bits definition for I2Sx_TDRx registers *************/
+
+/***********  Bits definition for I2Sx_TFRx registers *************/
+#define I2Sx_TFR_WFP_SHIFT    16
+#define I2Sx_TFR_WFP_MASK     ((uint32_t)((uint32_t)0xF \
+                                                      << I2Sx_TFR_WFP_SHIFT))
+#define I2Sx_TFR_WFP(x)       ((uint32_t)(((uint32_t)(x) \
+                                                      << I2Sx_TFR_WFP_SHIFT) \
+                                                       & I2Sx_TFR_WFP_MASK))
+
+#define I2Sx_TFR_RFP_SHIFT    0
+#define I2Sx_TFR_RFP_MASK     ((uint32_t)((uint32_t)0xF \
+                                                      << I2Sx_TFR_RFP_SHIFT))
+#define I2Sx_TFR_RFP(x)       ((uint32_t)(((uint32_t)(x) \
+                                                      << I2Sx_TFR_RFP_SHIFT) \
+                                                       & I2Sx_TFR_RFP_MASK))
+
+
+/***********  Bits definition for I2Sx_TMR  registers *************/
+
+/***********  Bits definition for I2Sx_RCSR register  *************/
+#define I2Sx_RCSR_RE            ((uint32_t)0x80000000)
+#define I2Sx_RCSR_STOPE         ((uint32_t)0x40000000)
+#define I2Sx_RCSR_DBGE          ((uint32_t)0x20000000)
+#define I2Sx_RCSR_BCE           ((uint32_t)0x10000000)
+
+#define I2Sx_RCSR_FR            ((uint32_t)0x02000000)
+#define I2Sx_RCSR_SR            ((uint32_t)0x01000000)
+
+#define I2Sx_RCSR_WSF           ((uint32_t)0x00100000)
+#define I2Sx_RCSR_SEF           ((uint32_t)0x00080000)
+#define I2Sx_RCSR_FEF           ((uint32_t)0x00040000)
+#define I2Sx_RCSR_FWF           ((uint32_t)0x00020000)
+#define I2Sx_RCSR_FRF           ((uint32_t)0x00010000)
+
+
+#define I2Sx_RCSR_WSIE          ((uint32_t)0x00001000)
+#define I2Sx_RCSR_SEIE          ((uint32_t)0x00000800)
+#define I2Sx_RCSR_FEIE          ((uint32_t)0x00000400)
+#define I2Sx_RCSR_FWIE          ((uint32_t)0x00000200)
+#define I2Sx_RCSR_FRIE          ((uint32_t)0x00000100)
+
+#define I2Sx_RCSR_FWDE          ((uint32_t)0x00000002)
+#define I2Sx_RCSR_FRDE          ((uint32_t)0x00000001)
+
+/***********  Bits definition for I2Sx_RCR1 register  *************/
+#define I2Sx_RCR1_RFW_SHIFT     0
+#define I2Sx_RCR1_RFW_MASK     ((uint32_t)((uint32_t)0x7  \
+                                                      << I2Sx_RCR1_RFW_SHIFT))
+#define I2Sx_RCR1_RFW(x)       ((uint32_t)(((uint32_t)(x) \
+                                                      << I2Sx_RCR1_RFW_SHIFT) \
+                                                      & I2Sx_RCR1_RFW_MASK))
+
+/***********  Bits definition for I2Sx_RCR2 register  *************/
+#define I2Sx_RCR2_SYNC_SHIFT    30
+#define I2Sx_RCR2_SYNC_MASK     ((uint32_t)((uint32_t)0x3  \
+                                                      << I2Sx_RCR2_SYNC_SHIFT))
+#define I2Sx_RCR2_SYNC(x)       ((uint32_t)(((uint32_t)(x) \
+                                                      << I2Sx_RCR2_SYNC_SHIFT) \
+                                                       & I2Sx_RCR2_SYNC_MASK))
+#define I2Sx_RCR2_BCS           ((uint32_t)0x20000000)
+#define I2Sx_RCR2_BCI           ((uint32_t)0x10000000)
+#define I2Sx_RCR2_MSEL_SHIFT    26
+#define I2Sx_RCR2_MSEL_MASK     ((uint32_t)((uint32_t)0x3  \
+                                                      << I2Sx_RCR2_MSEL_SHIFT))
+#define I2Sx_RCR2_MSEL(x)       ((uint32_t)(((uint32_t)(x) \
+                                                      << I2Sx_RCR2_MSEL_SHIFT) \
+                                                       & I2Sx_RCR2_MSEL_MASK))
+
+#define I2Sx_RCR2_BCP           ((uint32_t)0x02000000)
+#define I2Sx_RCR2_BCD           ((uint32_t)0x01000000)
+
+#define I2Sx_RCR2_DIV_SHIFT    0
+#define I2Sx_RCR2_DIV_MASK     ((uint32_t)((uint32_t)0xFF \
+                                                      << I2Sx_RCR2_DIV_SHIFT))
+#define I2Sx_RCR2_DIV(x)       ((uint32_t)(((uint32_t)(x) \
+                                                      << I2Sx_RCR2_DIV_SHIFT) \
+                                                       & I2Sx_RCR2_DIV_MASK))
+
+/***********  Bits definition for I2Sx_RCR3 register  *************/
+#define I2Sx_RCR3_RCE_SHIFT    16
+#define I2Sx_RCR3_RCE_MASK     ((uint32_t)((uint32_t)0x3 \
+                                                      << I2Sx_RCR3_RCE_SHIFT))
+#define I2Sx_RCR3_RCE(x)       ((uint32_t)(((uint32_t)(x) \
+                                                      << I2Sx_RCR3_RCE_SHIFT) \
+                                                       & I2Sx_RCR3_RCE_MASK))
+
+#define I2Sx_RCR3_WDFL_SHIFT    0
+#define I2Sx_RCR3_WDFL_MASK     ((uint32_t)((uint32_t)0x1F \
+                                                      << I2Sx_RCR3_WDFL_SHIFT))
+#define I2Sx_RCR3_WDFL(x)       ((uint32_t)(((uint32_t)(x) \
+                                                      << I2Sx_RCR3_WDFL_SHIFT) \
+                                                       & I2Sx_RCR3_WDFL_MASK))
+
+/***********  Bits definition for I2Sx_RCR4 register  *************/
+#define I2Sx_RCR4_FRSZ_SHIFT    16
+#define I2Sx_RCR4_FRSZ_MASK     ((uint32_t)((uint32_t)0x1F \
+                                                      << I2Sx_RCR4_FRSZ_SHIFT))
+#define I2Sx_RCR4_FRSZ(x)       ((uint32_t)(((uint32_t)(x) \
+                                                      << I2Sx_RCR4_FRSZ_SHIFT) \
+                                                       & I2Sx_RCR4_FRSZ_MASK))
+
+#define I2Sx_RCR4_SYWD_SHIFT    8
+#define I2Sx_RCR4_SYWD_MASK     ((uint32_t)((uint32_t)0x1F \
+                                                      << I2Sx_RCR4_SYWD_SHIFT))
+#define I2Sx_RCR4_SYWD(x)       ((uint32_t)(((uint32_t)(x) \
+                                                      << I2Sx_RCR4_SYWD_SHIFT) \
+                                                       & I2Sx_RCR4_SYWD_MASK))
+#define I2Sx_RCR4_MF            ((uint32_t)0x00000010)
+#define I2Sx_RCR4_FSE           ((uint32_t)0x00000008)
+
+#define I2Sx_RCR4_FSP           ((uint32_t)0x00000002)
+#define I2Sx_RCR4_FSD           ((uint32_t)0x00000001)
+
+/***********  Bits definition for I2Sx_RCR5 register  *************/
+#define I2Sx_RCR5_WNW_SHIFT    24
+#define I2Sx_RCR5_WNW_MASK     ((uint32_t)((uint32_t)0x1F \
+                                                      << I2Sx_RCR5_WNW_SHIFT))
+#define I2Sx_RCR5_WNW(x)       ((uint32_t)(((uint32_t)(x) \
+                                                      << I2Sx_RCR5_WNW_SHIFT) \
+                                                       & I2Sx_RCR5_WNW_MASK))
+
+#define I2Sx_RCR5_WOW_SHIFT    16
+#define I2Sx_RCR5_WOW_MASK     ((uint32_t)((uint32_t)0x1F \
+                                                      << I2Sx_RCR5_WOW_SHIFT))
+#define I2Sx_RCR5_WOW(x)       ((uint32_t)(((uint32_t)(x) \
+                                                      << I2Sx_RCR5_WOW_SHIFT) \
+                                                       & I2Sx_RCR5_WOW_MASK))
+
+#define I2Sx_RCR5_FBT_SHIFT    8
+#define I2Sx_RCR5_FBT_MASK     ((uint32_t)((uint32_t)0x1F \
+                                                      << I2Sx_RCR5_FBT_SHIFT))
+#define I2Sx_RCR5_FBT(x)       ((uint32_t)(((uint32_t)(x) \
+                                                      << I2Sx_RCR5_FBT_SHIFT) \
+                                                       & I2Sx_RCR5_FBT_MASK))
+/***********  Bits definition for I2Sx_RDRx registers *************/
+
+/***********  Bits definition for I2Sx_RFRx registers *************/
+#define I2Sx_RFR_WFP_SHIFT    16
+#define I2Sx_RFR_WFP_MASK     ((uint32_t)((uint32_t)0xF \
+                                                      << I2Sx_RFR_WFP_SHIFT))
+#define I2Sx_RFR_WFP(x)       ((uint32_t)(((uint32_t)(x) \
+                                                      << I2Sx_RFR_WFP_SHIFT) \
+                                                       & I2Sx_RFR_WFP_MASK))
+
+#define I2Sx_RFR_RFP_SHIFT    0
+#define I2Sx_RFR_RFP_MASK     ((uint32_t)((uint32_t)0xF \
+                                                      << I2Sx_RFR_RFP_SHIFT))
+#define I2Sx_RFR_RFP(x)       ((uint32_t)(((uint32_t)(x) \
+                                                      << I2Sx_RFR_RFP_SHIFT) \
+                                                       & I2Sx_RFR_RFP_MASK))
+/***********  Bits definition for I2Sx_RMR  register  *************/
+
+/***********  Bits definition for I2Sx_MCR  register  *************/
+#define I2Sx_CMR_DUF           ((uint32_t)0x80000000)
+#define I2Sx_CMR_MOE           ((uint32_t)0x40000000)
+
+#define I2Sx_CMR_MICS_SHIFT    24
+#define I2Sx_CMR_MICS_MASK     ((uint32_t)((uint32_t)0x3 \
+                                                      << I2Sx_CMR_MICS_SHIFT))
+#define I2Sx_CMR_MICS(x)       ((uint32_t)(((uint32_t)(x) \
+                                                      << I2Sx_CMR_MICS_SHIFT) \
+                                                       & I2Sx_CMR_MICS_MASK))
+
+
+/***********  Bits definition for I2Sx_MDR  register  *************/
+#define I2Sx_MDR_FRACT_SHIFT    12
+#define I2Sx_MDR_FRACT_MASK     ((uint32_t)((uint32_t)0xFF \
+                                                      << I2Sx_MDR_FRACT_SHIFT))
+#define I2Sx_MDR_FRACT(x)       ((uint32_t)(((uint32_t)(x) \
+                                                      << I2Sx_MDR_FRACT_SHIFT) \
+                                                       & I2Sx_MDR_FRACT_MASK))
+
+#define I2Sx_MDR_DIVIDE_SHIFT    0
+#define I2Sx_MDR_DIVIDE_MASK     ((uint32_t)((uint32_t)0xFFF \
+                                                     << I2Sx_MDR_DIVIDE_SHIFT))
+#define I2Sx_MDR_DIVIDE(x)       ((uint32_t)(((uint32_t)(x) \
+                                                     << I2Sx_MDR_DIVIDE_SHIFT) \
+                                                      & I2Sx_MDR_DIVIDE_MASK))
+
 
 /****************************************************************/
 /*                                                              */
