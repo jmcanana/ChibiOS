@@ -198,3 +198,11 @@ ULIBS =
 
 RULESPATH = $(CHIBIOS)/os/common/ports/ARMCMx/compilers/GCC
 include $(RULESPATH)/rules.mk
+
+openocd:
+	@echo Launching openOCD...
+	@sudo ~/opt/openocd/bin/openocd -s ~/opt/openocd/share/openocd/scripts -f interface/osbdm.cfg \
+	    -f board/twr-k60n512.cfg
+
+gdb:
+	arm-none-eabi-gdb -tui --eval-command="target remote localhost:3333" build/ch.elf
