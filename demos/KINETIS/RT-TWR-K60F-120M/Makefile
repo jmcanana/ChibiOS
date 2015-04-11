@@ -79,7 +79,7 @@ PROJECT = ch
 CHIBIOS = ../../..
 include $(CHIBIOS)/os/hal/hal.mk
 include $(CHIBIOS)/os/hal/boards/FREESCALE_TWR_K60F120M/board.mk
-include $(CHIBIOS)/os/hal/ports/KINETIS/K60x/K60F120/platform.mk
+include $(CHIBIOS)/os/hal/ports/KINETIS/K60x/platform.mk
 include $(CHIBIOS)/os/hal/osal/rt/osal.mk
 include $(CHIBIOS)/os/rt/rt.mk
 include $(CHIBIOS)/os/rt/ports/ARMCMx/compilers/GCC/mk/port_k60x.mk
@@ -208,3 +208,9 @@ openocd:
 
 gdb:
 	arm-none-eabi-gdb --eval-command="target remote localhost:3333" build/ch.elf
+
+ctags: $(INCDIR)
+	@echo $? > forTags.txt
+
+
+
