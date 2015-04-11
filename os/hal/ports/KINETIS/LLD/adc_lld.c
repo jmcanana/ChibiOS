@@ -23,23 +23,39 @@
  */
 
 #include "hal.h"
-
 #if HAL_USE_ADC || defined(__DOXYGEN__)
 
 /*===========================================================================*/
 /* Driver local definitions.                                                 */
 /*===========================================================================*/
-
 #define ADC_CHANNEL_MASK                    0x1f
 
 /*===========================================================================*/
 /* Driver exported variables.                                                */
 /*===========================================================================*/
 
-/** @brief ADC1 driver identifier.*/
+/** @brief ADC0 driver identifier.*/
 #if KINETIS_ADC_USE_ADC0 || defined(__DOXYGEN__)
+ADCDriver ADCD0;
+#endif
+
+/** @brief ADC1 driver identifier.*/
+#if KINETIS_ADC_USE_ADC1 || defined(__DOXYGEN__)
 ADCDriver ADCD1;
 #endif
+
+/** @brief ADC2 driver identifier.*/
+#if KINETIS_ADC_USE_ADC2 || defined(__DOXYGEN__)
+ADCDriver ADCD2;
+#endif
+
+/** @brief ADC3 driver identifier.*/
+#if KINETIS_ADC_USE_ADC3 || defined(__DOXYGEN__)
+ADCDriver ADCD3;
+#endif
+
+
+
 
 /*===========================================================================*/
 /* Driver local variables and types.                                         */
@@ -83,56 +99,88 @@ static void calibrate(ADCDriver *adcp) {
 /* Driver interrupt handlers.                                                */
 /*===========================================================================*/
 
-#if KINETIS_ADC_USE_ADC0 || defined(__DOXYGEN__)
 /**
- * @brief   ADC interrupt handler.
+ * @brief   Common IRQ handler.
  *
- * @isr
+ * @param[in] adcp         pointer to an ADCDriver
  */
-OSAL_IRQ_HANDLER(KINETIS_ADC0_IRC_VECTOR) {
-  OSAL_IRQ_PROLOGUE();
+static void serve_interrupt(ADCDriver *adcp) {
 
-  ADCDriver *adcp = &ADCD1;
+    /* Disable Interrupt, Disable Channel */
+    adcp->adc->SC1A = ADCx_SC1n_ADCH(ADCx_SC1n_ADCH_DISABLED);
 
-  /* Disable Interrupt, Disable Channel */
-  adcp->adc->SC1A = ADCx_SC1n_ADCH(ADCx_SC1n_ADCH_DISABLED);
+    /* Read the sample into the buffer */
+    adcp->samples[adcp->current_index++] = adcp->adc->RA;
 
-  /* Read the sample into the buffer */
-  adcp->samples[adcp->current_index++] = adcp->adc->RA;
+    bool more = true;
 
-  bool more = true;
+    /*  At the end of the buffer then we may be finished */
+    if (adcp->current_index == adcp->number_of_samples) {
+        _adc_isr_full_code(adcp);
 
-  /*  At the end of the buffer then we may be finished */
-  if (adcp->current_index == adcp->number_of_samples) {
-    _adc_isr_full_code(&ADCD1);
+        adcp->current_index = 0;
 
-    adcp->current_index = 0;
-
-    /* We are never finished in circular mode */
-    more = ADCD1.grpp->circular;
-  }
-
-  if (more) {
-
-    /* Signal half completion in circular mode. */
-    if (ADCD1.grpp->circular &&
-        (adcp->current_index == (adcp->number_of_samples / 2))) {
-
-        _adc_isr_half_code(&ADCD1);
+        /* We are never finished in circular mode */
+        more = adcp->grpp->circular;
     }
 
-    /* Skip to the next channel */
-    do {
-      adcp->current_channel = (adcp->current_channel + 1) & ADC_CHANNEL_MASK;
-    } while (((1 << adcp->current_channel) & adcp->grpp->channel_mask) == 0);
+    if (more) {
 
-    /* Enable Interrupt, Select the Channel */
-    adcp->adc->SC1A = ADCx_SC1n_AIEN | ADCx_SC1n_ADCH(adcp->current_channel);
-  }
+        /* Signal half completion in circular mode. */
+        if (adcp->grpp->circular &&
+                (adcp->current_index == (adcp->number_of_samples / 2))) {
 
+            _adc_isr_half_code(adcp);
+        }
+
+        /* Skip to the next channel */
+        do {
+            adcp->current_channel = (adcp->current_channel + 1)
+                                     & ADC_CHANNEL_MASK;
+        } while (((1 << adcp->current_channel)
+                   & adcp->grpp->channel_mask) == 0);
+
+        /* Enable Interrupt, Select the Channel */
+        adcp->adc->SC1A = ADCx_SC1n_AIEN
+                        | ADCx_SC1n_ADCH(adcp->current_channel);
+    }
+
+
+}
+
+
+#if KINETIS_ADC_USE_ADC0 || defined(__DOXYGEN__)
+OSAL_IRQ_HANDLER(KINETIS_ADC0_IRC_VECTOR) {
+  OSAL_IRQ_PROLOGUE();
+  serve_interrupt(&ADCD0);
   OSAL_IRQ_EPILOGUE();
 }
 #endif
+
+#if KINETIS_ADC_USE_ADC1 || defined(__DOXYGEN__)
+OSAL_IRQ_HANDLER(KINETIS_ADC1_IRC_VECTOR) {
+  OSAL_IRQ_PROLOGUE();
+  serve_interrupt(&ADCD1);
+  OSAL_IRQ_EPILOGUE();
+}
+#endif
+
+#if KINETIS_ADC_USE_ADC2 || defined(__DOXYGEN__)
+OSAL_IRQ_HANDLER(KINETIS_ADC2_IRC_VECTOR) {
+  OSAL_IRQ_PROLOGUE();
+  serve_interrupt(&ADCD2);
+  OSAL_IRQ_EPILOGUE();
+}
+#endif
+
+#if KINETIS_ADC_USE_ADC3 || defined(__DOXYGEN__)
+OSAL_IRQ_HANDLER(KINETIS_ADC3_IRC_VECTOR) {
+  OSAL_IRQ_PROLOGUE();
+  serve_interrupt(&ADCD3);
+  OSAL_IRQ_EPILOGUE();
+}
+#endif
+
 
 /*===========================================================================*/
 /* Driver exported functions.                                                */
@@ -147,12 +195,31 @@ void adc_lld_init(void) {
 
 #if KINETIS_ADC_USE_ADC0
   /* Driver initialization.*/
-  adcObjectInit(&ADCD1);
-#endif
-
+  adcObjectInit(&ADCD0);
   /* The shared vector is initialized on driver initialization and never
      disabled.*/
   nvicEnableVector(ADC0_IRQn, KINETIS_ADC_IRQ_PRIORITY);
+#endif
+
+#if KINETIS_ADC_USE_ADC1
+  /* Driver initialization.*/
+  adcObjectInit(&ADCD1);
+  nvicEnableVector(ADC1_IRQn, KINETIS_ADC_IRQ_PRIORITY);
+#endif
+
+#if KINETIS_ADC_USE_ADC2
+  /* Driver initialization.*/
+  adcObjectInit(&ADCD2);
+  nvicEnableVector(ADC2_IRQn, KINETIS_ADC_IRQ_PRIORITY);
+#endif
+
+#if KINETIS_ADC_USE_ADC3
+  /* Driver initialization.*/
+  adcObjectInit(&ADCD3);
+  nvicEnableVector(ADC3_IRQn, KINETIS_ADC_IRQ_PRIORITY);
+#endif
+
+
 }
 
 /**
@@ -164,19 +231,43 @@ void adc_lld_init(void) {
  */
 void adc_lld_start(ADCDriver *adcp) {
 
-  /* If in stopped state then enables the ADC clock.*/
-  if (adcp->state == ADC_STOP) {
-    SIM->SCGC6 |= SIM_SCGC6_ADC0;
-
+    /* If in stopped state then enables the ADC clock.*/
+    if (adcp->state == ADC_STOP) {
 #if KINETIS_ADC_USE_ADC0
-    if (&ADCD1 == adcp) {
-      adcp->adc = ADC0;
-      if (adcp->config->calibrate) {
-        calibrate(adcp);
-      }
-    }
+        if (&ADCD0 == adcp) {
+            SIM->SCGC6 |= SIM_SCGC6_ADC0;
+            adcp->adc = ADC0;
+        }
 #endif /* KINETIS_ADC_USE_ADC0 */
-  }
+
+#if KINETIS_ADC_USE_ADC1
+        if (&ADCD1 == adcp) {
+            SIM->SCGC3 |= SIM_SCGC3_ADC1;
+            adcp->adc = ADC1;
+        }
+#endif /* KINETIS_ADC_USE_ADC1 */
+
+
+#if KINETIS_ADC_USE_ADC2
+        if (&ADCD2 == adcp) {
+            SIM->SCGC6 |= SIM_SCGC6_ADC2;
+            adcp->adc = ADC2;
+        }
+#endif /* KINETIS_ADC_USE_ADC2 */
+
+
+#if KINETIS_ADC_USE_ADC3
+        if (&ADCD3 == adcp) {
+            SIM->SCGC3 |= SIM_SCGC3_ADC3;
+            adcp->adc = ADC3;
+        }
+#endif /* KINETIS_ADC_USE_ADC3 */
+
+        if (adcp->config->calibrate) {
+            calibrate(adcp);
+        }
+    }
+
 }
 
 /**
@@ -188,17 +279,35 @@ void adc_lld_start(ADCDriver *adcp) {
  */
 void adc_lld_stop(ADCDriver *adcp) {
 
-  /* If in ready state then disables the ADC clock.*/
-  if (adcp->state == ADC_READY) {
-    SIM->SCGC6 &= ~SIM_SCGC6_ADC0;
+    /* If in ready state then disables the ADC clock.*/
+    if (adcp->state == ADC_READY) {
 
 #if KINETIS_ADC_USE_ADC0
-    if (&ADCD1 == adcp) {
-      /* Disable Interrupt, Disable Channel */
-      adcp->adc->SC1A = ADCx_SC1n_ADCH(ADCx_SC1n_ADCH_DISABLED);
-    }
+        if (&ADCD0 == adcp) {
+            SIM->SCGC6 &= ~SIM_SCGC6_ADC0;
+        }
 #endif
-  }
+
+#if KINETIS_ADC_USE_ADC1
+        if (&ADCD1 == adcp) {
+            SIM->SCGC3 &= ~SIM_SCGC3_ADC1;
+        }
+#endif
+
+#if KINETIS_ADC_USE_ADC2
+        if (&ADCD2 == adcp) {
+            SIM->SCGC6 &= ~SIM_SCGC6_ADC2;
+        }
+#endif
+
+#if KINETIS_ADC_USE_ADC3
+        if (&ADCD3 == adcp) {
+            SIM->SCGC3 &= ~SIM_SCGC3_ADC3;
+        }
+#endif
+        /* Disable Interrupt, Disable Channel */
+        adcp->adc->SC1A = ADCx_SC1n_ADCH(ADCx_SC1n_ADCH_DISABLED);
+    }
 }
 
 /**

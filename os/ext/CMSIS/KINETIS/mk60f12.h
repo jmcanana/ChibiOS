@@ -839,7 +839,9 @@ typedef struct {
 #define SIM_SCGC1_OSC1               ((uint32_t)0x00000020)    /*!< OSC1_Gate Control */
 
 /*******  Bits definition for SIM_SCGC3 register  ************/
-#define SIM_SCGC6_I2S1               ((uint32_t)0x00008000)    /*!< SPI1 Clock Gate Control */
+#define SIM_SCGC3_ADC3               ((uint32_t)0x10000000)    /*!< ADC3 Clock Gate Control */
+#define SIM_SCGC3_ADC1               ((uint32_t)0x08000000)    /*!< ADC1 Clock Gate Control */
+#define SIM_SCGC3_I2S1               ((uint32_t)0x00008000)    /*!< I2S1 Clock Gate Control */
 
 /*******  Bits definition for SIM_SCGC4 register  ************/
 #define SIM_SCGC4_VREF               ((uint32_t)0x00100000)    /*!< VREF Clock Gate Control */
@@ -864,6 +866,7 @@ typedef struct {
 
 /*******  Bits definition for SIM_SCGC6 register  ************/
 #define SIM_SCGC6_RTC                ((uint32_t)0x20000000)    /*!< RTC Access Control */
+#define SIM_SCGC6_ADC2               ((uint32_t)0x10000000)    /*!< ADC0 Clock Gate Control */
 #define SIM_SCGC6_ADC0               ((uint32_t)0x08000000)    /*!< ADC0 Clock Gate Control */
 #define SIM_SCGC6_FTM1               ((uint32_t)0x02000000)    /*!< FTM1 Clock Gate Control */
 #define SIM_SCGC6_FTM0               ((uint32_t)0x01000000)    /*!< FTM0 Clock Gate Control */

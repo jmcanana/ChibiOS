@@ -30,7 +30,6 @@
 /*===========================================================================*/
 /* Driver constants.                                                         */
 /*===========================================================================*/
-
 /**
  * @name    Absolute Maximum Ratings
  * @{
@@ -145,12 +144,12 @@
  */
 
 /**
- * @brief   ADC1 driver enable switch.
- * @details If set to @p TRUE the support for ADC1 is included.
+ * @brief   ADC0 driver enable switch.
+ * @details If set to @p TRUE the support for ADC0 is included.
  * @note    The default is @p TRUE.
  */
 #if !defined(KINETIS_ADC_USE_ADC0) || defined(__DOXYGEN__)
-#define KINETIS_ADC_USE_ADC0                FALSE
+#define KINETIS_ADC_USE_ADC0                TRUE
 #endif
 
 /**
@@ -167,10 +166,25 @@
 /*===========================================================================*/
 
 #if KINETIS_ADC_USE_ADC0 && !KINETIS_HAS_ADC0
+#error "ADC0 not present in the selected device"
+#endif
+
+#if KINETIS_ADC_USE_ADC1 && !KINETIS_HAS_ADC1
 #error "ADC1 not present in the selected device"
 #endif
 
-#if !KINETIS_ADC_USE_ADC0
+#if KINETIS_ADC_USE_ADC2 && !KINETIS_HAS_ADC2
+#error "ADC2 not present in the selected device"
+#endif
+
+#if KINETIS_ADC_USE_ADC3 && !KINETIS_HAS_ADC3
+#error "ADC3 not present in the selected device"
+#endif
+
+
+#if !KINETIS_ADC_USE_ADC0 && !KINETIS_ADC_USE_ADC1 && !KINETIS_ADC_USE_ADC2 \
+                          && !KINETIS_ADC_USE_ADC3
+
 #error "ADC driver activated but no ADC peripheral assigned"
 #endif
 
@@ -338,7 +352,19 @@ struct ADCDriver {
 /*===========================================================================*/
 
 #if KINETIS_ADC_USE_ADC0 && !defined(__DOXYGEN__)
+extern ADCDriver ADCD0;
+#endif
+
+#if KINETIS_ADC_USE_ADC1 && !defined(__DOXYGEN__)
 extern ADCDriver ADCD1;
+#endif
+
+#if KINETIS_ADC_USE_ADC2 && !defined(__DOXYGEN__)
+extern ADCDriver ADCD2;
+#endif
+
+#if KINETIS_ADC_USE_ADC3 && !defined(__DOXYGEN__)
+extern ADCDriver ADCD3;
 #endif
 
 #ifdef __cplusplus

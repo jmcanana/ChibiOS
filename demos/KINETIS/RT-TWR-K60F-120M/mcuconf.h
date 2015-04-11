@@ -95,6 +95,13 @@
  */
 #define KINETIS_SERIAL_USE_UART5              TRUE
 
+/*
+ * ADC driver system settings.
+ */
+#define KINETIS_ADC_USE_ADC0                  TRUE
+#define KINETIS_ADC_USE_ADC1                  TRUE
+#define KINETIS_ADC_USE_ADC2                  TRUE
+#define KINETIS_ADC_USE_ADC3                  TRUE
 
 /*
  * EXTI driver system settings.
