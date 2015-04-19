@@ -175,11 +175,11 @@ struct I2CDriver {
 #if !defined(__DOXYGEN__)
 
 #if KINETIS_I2C_USE_I2C0
-extern I2CDriver I2CD1;
+extern I2CDriver I2CD0;
 #endif
 
 #if KINETIS_I2C_USE_I2C1
-extern I2CDriver I2CD2;
+extern I2CDriver I2CD1;
 #endif
 
 #endif

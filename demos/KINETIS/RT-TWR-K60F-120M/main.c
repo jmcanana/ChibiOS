@@ -62,6 +62,21 @@ void console_println(const char *msgp) {
 }
 
 
+/* --------------------   I2C ---------------------------- */
+
+#define MMA8451_ADDR 0x1D
+#define WHO_AM_I     0x0D
+
+static bool i2cOk = false;
+
+I2CConfig i2c0Config = {
+    .clock = 100000,
+};
+
+
+
+
+
 /* --------------------   ADC ---------------------------- */
 #define ADC_GRP1_NUM_CHANNELS   3
 #define ADC_GRP1_BUF_DEPTH      1
@@ -203,27 +218,38 @@ static const ADCConfig adccfg1 = {
 static THD_WORKING_AREA(waThread1, 64);
 static THD_FUNCTION(Thread1, arg) {
 
-  (void)arg;
-  chRegSetThreadName("YellowBlinker");
-  while (TRUE) {
-    palTogglePad(IOPORT1, 28);
-    chThdSleepMilliseconds(300);
-  }
+    (void)arg;
+    chRegSetThreadName("YellowBlinker");
+    while (TRUE) {
+        palTogglePad(IOPORT1, 28);
+        chThdSleepMilliseconds(300);
+    }
 
-  return 0;
+    return 0;
 }
 
-static THD_WORKING_AREA(waThread2, 64);
+static THD_WORKING_AREA(waThread2, 1024);
 static THD_FUNCTION(Thread2, arg) {
+    (void)arg;
+    uint8_t tx[1], rx[1];
+    char string[256];
 
-  (void)arg;
-  chRegSetThreadName("OrangeBlinker");
-  while (TRUE) {
-    palTogglePad(IOPORT1, 11);
-    chThdSleepMilliseconds(600);
-  }
+    chRegSetThreadName("OrangeBlinker");
+    while (TRUE) {
+        palTogglePad(IOPORT1, 11);
 
-  return 0;
+        tx[0] = WHO_AM_I;
+        i2cMasterTransmitTimeout(&I2CD0, MMA8451_ADDR, tx, 1,
+                rx, 1, TIME_INFINITE);
+        i2cOk = (rx[0] == 0x1A) ? true : false;
+        chsnprintf(string, 255, "Accel? %d %x", i2cOk, rx[0]);
+        console_println(string);
+
+
+
+        chThdSleepMilliseconds(600);
+    }
+    return 0;
 }
 
 static THD_WORKING_AREA(waThread3, 512);
@@ -232,7 +258,7 @@ static THD_FUNCTION(Thread3, arg) {
     (void)arg;
     chRegSetThreadName("BlueBlinker");
     while (TRUE) {
-#if 1
+#if 0
         for (int i =0; i < _MAX_ADC; i++) {
             chsnprintf(string, 255, "ADC_%d: Pot: %d, Temp: %d, vamb %d", i,
                     aips[i].pot,  aips[i].temp, aips[i].vamb ) ;
@@ -267,6 +293,13 @@ int main(void) {
     chSysInit();
 
     /*
+     * Activate the I2C drivers.
+     */
+
+
+    i2cStart(&I2CD0, &i2c0Config);
+
+    /*
      * Activate the ADC drivers.
      */
     adcStart(&ADCD0, &adccfg1);
@@ -296,6 +329,7 @@ int main(void) {
     /*
      * Creates the blinker threads.
      */
+
     chThdCreateStatic(waThread1, sizeof(waThread1), NORMALPRIO, Thread1, NULL);
     chThdCreateStatic(waThread2, sizeof(waThread2), NORMALPRIO, Thread2, NULL);
     chThdCreateStatic(waThread3, sizeof(waThread3), NORMALPRIO, Thread3, NULL);
@@ -317,6 +351,8 @@ int main(void) {
         adcConvert(&ADCD1, &adcgrpcfg1, samples1, ADC_GRP1_BUF_DEPTH);
         adcConvert(&ADCD2, &adcgrpcfg1, samples2, ADC_GRP1_BUF_DEPTH);
         adcConvert(&ADCD3, &adcgrpcfg1, samples3, ADC_GRP1_BUF_DEPTH);
+
+
 
         chThdSleepMilliseconds(500);
     }

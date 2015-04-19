@@ -2,7 +2,7 @@
     ChibiOS/HAL - Copyright (C) 2006,2007,2008,2009,2010,
                   2011,2012,2013,2014 Giovanni Di Sirio.
 
-    This file is part of ChibiOS/HAL 
+    This file is part of ChibiOS/HAL
 
     ChibiOS/HAL is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by

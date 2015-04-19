@@ -39,15 +39,23 @@
  * @brief   I2C0 driver identifier.
  */
 #if KINETIS_I2C_USE_I2C0 || defined(__DOXYGEN__)
-I2CDriver I2CD1;
+I2CDriver I2CD0;
 #endif
 
 /**
  * @brief   I2C1 driver identifier.
  */
 #if KINETIS_I2C_USE_I2C1 || defined(__DOXYGEN__)
-I2CDriver I2CD2;
+I2CDriver I2CD1;
 #endif
+
+/**
+ * @brief   I2C interrupt priority level setting.
+ */
+#if !defined(KINETIS_I2C_IRQ_PRIORITY) || defined(__DOXYGEN__)
+#define KINETIS_I2C_IRQ_PRIORITY            5
+#endif
+
 
 /*===========================================================================*/
 /* Driver local variables and types.                                         */
@@ -63,7 +71,11 @@ void config_frequency(I2CDriver *i2cp) {
    * divider used to generate the SCL clock from the main
    * system clock.
    */
-  uint16_t icr_table[] = {
+
+    int mult_table[] = {
+        1, 2, 4,
+    };
+  int16_t icr_table[] = {
     /* 0x00 - 0x0F */
     20,22,24,26,28,30,34,40,28,32,36,40,44,48,56,68,
     /* 0x10 - 0x1F */
@@ -74,34 +86,44 @@ void config_frequency(I2CDriver *i2cp) {
     640,768,896,1024,1152,1280,1536,1920,1280,1536,1792,2048,2304,2560,3072,3840,
   };
 
-  int length = sizeof(icr_table) / sizeof(icr_table[0]);
+  int length      = sizeof(icr_table)  / sizeof(icr_table[0]);
+  int multipliers = sizeof(mult_table) / sizeof(mult_table[0]);
   uint16_t divisor;
-  uint8_t i = 0, index = 0;
+  int i;
+  int k;
+  int multIdx;
+  int icrIdx;
   uint16_t best, diff;
 
-  if (i2cp->config != NULL)
-    divisor = KINETIS_SYSCLK_FREQUENCY / i2cp->config->clock;
-  else
-    divisor = KINETIS_SYSCLK_FREQUENCY / 100000;
+  if (i2cp->config != NULL) {
+    divisor = KINETIS_BUSCLK_FREQUENCY / i2cp->config->clock;
+  }
+  else {
+    divisor = KINETIS_BUSCLK_FREQUENCY / 100000;
+  }
 
   best = ~0;
-  index = 0;
+  multIdx =  0;
+  icrIdx  =  0;
   /* Tries to find the SCL clock which is the closest
    * approximation to the clock passed in config. To
    * stay on the safe side, only values that generate
    * lower frequency are used.
    */
-  for (i = 0; i < length; i++) {
-    if (icr_table[i] >= divisor) {
-      diff = icr_table[i] - divisor;
-      if (diff < best) {
-        best = diff;
-        index = i;
+  for (k = 0; k < multipliers; k++) {
+      for (i = 0; i < length; i++) {
+          if (icr_table[i] * mult_table[k] >= divisor) {
+              diff = (icr_table[i] * mult_table[k]) - divisor;
+              if (diff < best) {
+                  best = diff;
+                  icrIdx  = i;
+                  multIdx = k;
+              }
+          }
       }
-    }
   }
 
-  i2cp->i2c->F = index;
+  i2cp->i2c->F = (multIdx << 6) | icrIdx;
 }
 
 /**
@@ -181,21 +203,17 @@ static void serve_interrupt(I2CDriver *i2cp) {
 #if KINETIS_I2C_USE_I2C0 || defined(__DOXYGEN__)
 
 PORT_IRQ_HANDLER(KINETIS_I2C0_IRQ_VECTOR) {
-
-  PORT_IRQ_PROLOGUE();
-  serve_interrupt(&I2CD1);
+  OSAL_IRQ_PROLOGUE();
+  serve_interrupt(&I2CD0);
   PORT_IRQ_EPILOGUE();
 }
-
 #endif
 
 #if KINETIS_I2C_USE_I2C1 || defined(__DOXYGEN__)
 
-/* FIXME: KL2x has I2C1 on Vector64; K2x don't have I2C1! */
-PORT_IRQ_HANDLER(Vector64) {
-
+PORT_IRQ_HANDLER(KINETIS_I2C1_IRQ_VECTOR) {
   PORT_IRQ_PROLOGUE();
-  serve_interrupt(&I2CD2);
+  serve_interrupt(&I2CD1);
   PORT_IRQ_EPILOGUE();
 }
 
@@ -213,15 +231,15 @@ PORT_IRQ_HANDLER(Vector64) {
 void i2c_lld_init(void) {
 
 #if KINETIS_I2C_USE_I2C0
-  i2cObjectInit(&I2CD1);
-  I2CD1.thread = NULL;
-  I2CD1.i2c = I2C0;
+  i2cObjectInit(&I2CD0);
+  I2CD0.thread = NULL;
+  I2CD0.i2c = I2C0;
 #endif
 
 #if KINETIS_I2C_USE_I2C1
-  i2cObjectInit(&I2CD2);
-  I2CD2.thread = NULL;
-  I2CD2.i2c = I2C1;
+  i2cObjectInit(&I2CD1);
+  I2CD1.thread = NULL;
+  I2CD1.i2c = I2C1;
 #endif
 
 }
@@ -238,23 +256,23 @@ void i2c_lld_start(I2CDriver *i2cp) {
   if (i2cp->state == I2C_STOP) {
 
   /* TODO:
-   *   The PORT must be enabled somewhere. The PIN multiplexer
-   *   will map the I2C functionality to some PORT which must
-   *   than be enabled. The easier way is enabling all PORTs at
-   *   startup, which is currently being done in __early_init.
+   *   The PIN multiplexr must map the I2C functionality to
+   *   some PORT in the board.c file.
+   *
+   *   The corresponding PORT is enabled in _pal_lld_init
    */
 
 #if KINETIS_I2C_USE_I2C0
-    if (&I2CD1 == i2cp) {
+    if (&I2CD0 == i2cp) {
       SIM->SCGC4 |= SIM_SCGC4_I2C0;
-      nvicEnableVector(I2C0_IRQn, KINETIS_I2C_I2C0_PRIORITY);
+      nvicEnableVector(I2C0_IRQn, KINETIS_I2C_IRQ_PRIORITY);
     }
 #endif
 
 #if KINETIS_I2C_USE_I2C1
-    if (&I2CD2 == i2cp) {
+    if (&I2CD1 == i2cp) {
       SIM->SCGC4 |= SIM_SCGC4_I2C1;
-      nvicEnableVector(I2C1_IRQn, KINETIS_I2C_I2C1_PRIORITY);
+      nvicEnableVector(I2C1_IRQn, KINETIS_I2C_IRQ_PRIORITY);
     }
 #endif
 
@@ -279,14 +297,14 @@ void i2c_lld_stop(I2CDriver *i2cp) {
     i2cp->i2c->C1 &= ~(I2Cx_C1_IICEN | I2Cx_C1_IICIE);
 
 #if KINETIS_I2C_USE_I2C0
-    if (&I2CD1 == i2cp) {
+    if (&I2CD0 == i2cp) {
       SIM->SCGC4 &= ~SIM_SCGC4_I2C0;
       nvicDisableVector(I2C0_IRQn);
     }
 #endif
 
 #if KINETIS_I2C_USE_I2C1
-    if (&I2CD2 == i2cp) {
+    if (&I2CD1 == i2cp) {
       SIM->SCGC4 &= ~SIM_SCGC4_I2C1;
       nvicDisableVector(I2C1_IRQn);
     }
@@ -304,6 +322,8 @@ static inline msg_t _i2c_txrx_timeout(I2CDriver *i2cp, i2caddr_t addr,
   msg_t msg;
 
   uint8_t op = (i2cp->intstate == STATE_SEND) ? 0 : 1;
+
+
 
   i2cp->errors = I2C_NO_ERROR;
   i2cp->addr = addr;

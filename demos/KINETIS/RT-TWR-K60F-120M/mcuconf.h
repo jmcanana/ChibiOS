@@ -96,6 +96,12 @@
 #define KINETIS_SERIAL_USE_UART5              TRUE
 
 /*
+ * I2C driver system settings.
+ */
+#define KINETIS_I2C_USE_I2C0                  TRUE
+#define KINETIS_I2C_USE_I2C1                  TRUE
+
+/*
  * ADC driver system settings.
  */
 #define KINETIS_ADC_USE_ADC0                  TRUE

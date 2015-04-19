@@ -850,6 +850,7 @@ typedef struct {
 #define SIM_SCGC4_UART2              ((uint32_t)0x00001000)    /*!< UART2 Clock Gate Control */
 #define SIM_SCGC4_UART1              ((uint32_t)0x00000800)    /*!< UART1 Clock Gate Control */
 #define SIM_SCGC4_UART0              ((uint32_t)0x00000400)    /*!< UART0 Clock Gate Control */
+#define SIM_SCGC4_I2C1               ((uint32_t)0x00000080)    /*!< I2C0 Clock Gate Control */
 #define SIM_SCGC4_I2C0               ((uint32_t)0x00000040)    /*!< I2C0 Clock Gate Control */
 #define SIM_SCGC4_CMT                ((uint32_t)0x00000004)    /*!< CMT Clock Gate Control */
 #define SIM_SCGC4_EMW                ((uint32_t)0x00000002)    /*!< EWM Clock Gate Control */

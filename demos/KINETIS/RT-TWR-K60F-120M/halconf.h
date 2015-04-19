@@ -38,6 +38,15 @@
 #endif
 
 /**
+ * @brief   Enables the I2C subsystem.
+ */
+#if !defined(HAL_USE_I2C) || defined(__DOXYGEN__)
+#define HAL_USE_I2C                 TRUE
+#endif
+
+
+
+/**
  * @brief   Enables the ADC subsystem.
  */
 #if !defined(HAL_USE_ADC) || defined(__DOXYGEN__)
