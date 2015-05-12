@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2014 Fabio Utzig, http://fabioutzig.com
+ * Copyright (C) 2015 James McAnanama
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the "Software"),
@@ -23,7 +24,7 @@
 #ifndef _MK60F12_H_
 #define _MK60F12_H_
 
-#warning ... --- ... Add PGA, DAC, IEEE 1588 Timer, Ethernet, CAN, SDHC, I2S
+#warning ... --- ... Add PGA, DAC, IEEE 1588 Timer, Ethernet, CAN, SDHC
 
 /*
  * ==============================================================
@@ -875,10 +876,10 @@ typedef struct {
 #define SIM_SCGC6_PDB                ((uint32_t)0x00400000)    /*!< PDB Clock Gate Control */
 #define SIM_SCGC6_USBDCD             ((uint32_t)0x00200000)    /*!< USB DCD Clock Gate Control */
 #define SIM_SCGC6_CRC                ((uint32_t)0x00040000)    /*!< Low Power Timer Access Control */
-#define SIM_SCGC6_I2S                ((uint32_t)0x00008000)    /*!< CRC Clock Gate Control */
+#define SIM_SCGC6_I2S0               ((uint32_t)0x00008000)    /*!< CRC Clock Gate Control */
 #define SIM_SCGC6_SPI0               ((uint32_t)0x00001000)    /*!< SPI0 Clock Gate Control */
-#define SIM_SCGC6_DMAMUX             ((uint32_t)0x00000002)    /*!< DMA Mux Clock Gate Control */
-#define SIM_SCGC6_FTFL               ((uint32_t)0x00000001)    /*!< Flash Memory Clock Gate Control */
+#define SIM_SCGC6_DMAMUX             ((uint32_t)0x00000002)    /*!< DMA Mux0 Clock Gate Control */
+#define SIM_SCGC6_DMAMUX1            ((uint32_t)0x00000001)    /*!< DMA Mux1 Clock Gate Control */
 
 /*******  Bits definition for SIM_SCGC6 register  ************/
 #define SIM_SCGC7_MPU                ((uint32_t)0x00000004)    /*!< MPU Clock Gate Control */
@@ -1554,6 +1555,9 @@ typedef struct {
 /*         Direct Memory Access Multiplexer (DMAMUX)            */
 /*                                                              */
 /****************************************************************/
+
+/* TODO:  Move DMAMUX Slot info here? e.g. DMAMUX_I2S0_RX_SOURCE */
+
 /********  Bits definition for DMAMUX_CHCFGn register  **********/
 #define DMAMUX_CHCFGn_ENBL           ((uint8_t)((uint8_t)1 << 7))  /*!< DMA Channel Enable */
 #define DMAMUX_CHCFGn_TRIG           ((uint8_t)((uint8_t)1 << 6))  /*!< DMA Channel Trigger Enable */

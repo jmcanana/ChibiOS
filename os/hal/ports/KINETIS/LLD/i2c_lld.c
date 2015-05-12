@@ -30,6 +30,14 @@
 /*===========================================================================*/
 /* Driver local definitions.                                                 */
 /*===========================================================================*/
+/**
+ * @brief   I2C interrupt priority level setting.
+ */
+#if !defined(KINETIS_I2C_IRQ_PRIORITY) || defined(__DOXYGEN__)
+#define KINETIS_I2C_IRQ_PRIORITY            5
+#endif
+
+
 
 /*===========================================================================*/
 /* Driver exported variables.                                                */
@@ -49,12 +57,6 @@ I2CDriver I2CD0;
 I2CDriver I2CD1;
 #endif
 
-/**
- * @brief   I2C interrupt priority level setting.
- */
-#if !defined(KINETIS_I2C_IRQ_PRIORITY) || defined(__DOXYGEN__)
-#define KINETIS_I2C_IRQ_PRIORITY            5
-#endif
 
 
 /*===========================================================================*/
@@ -134,7 +136,8 @@ void config_frequency(I2CDriver *i2cp) {
  *
  * @param[in] i2cp         pointer to an I2CDriver
  */
-static void serve_interrupt(I2CDriver *i2cp) {
+static void serve_interrupt(I2CDriver *i2cp)
+{
 
   I2C_TypeDef *i2c = i2cp->i2c;
   intstate_t state = i2cp->intstate;

@@ -1,5 +1,6 @@
 /*
     ChibiOS/RT - Copyright (C) 2014 Fabio Utzig
+    ChibiOS/RT - Copyright (C) 2015 James McAnanama
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -15,7 +16,7 @@
 */
 
 /**
- * @file    KINETIS/i2c_lld.h
+ * @file    KINETIS/LLD/i2c_lld.h
  * @brief   KINETIS I2C subsystem low level driver header.
  *
  * @addtogroup I2C
@@ -41,7 +42,7 @@
 /*===========================================================================*/
 
 /**
- * @name    Configuration options
+ * @name   KINETIS Configuration options
  * @{
  */
 /**

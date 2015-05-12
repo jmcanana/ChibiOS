@@ -19,6 +19,11 @@
 #include "test.h"
 #include "chprintf.h"
 
+#include "util.h"
+
+
+
+
 /* Triggered when the button is pressed. The green led is toggled. */
 static void extcb1(EXTDriver *extp, expchannel_t channel) {
   (void)extp;
@@ -64,8 +69,17 @@ void console_println(const char *msgp) {
 
 /* --------------------   I2C ---------------------------- */
 
-#define MMA8451_ADDR 0x1D
-#define WHO_AM_I     0x0D
+bool codecError = FALSE;
+#define MMA8451_ADDR     0x1D
+#define WHO_AM_I         0x0D
+
+#define SGTL5000_PART_ID 0xA0
+#define REG_CHIP_CLK_CTRL                 0x0004
+#define REG_CHIP_I2S_CTRL                 0x0006
+
+#define Si5351_ADDR      0x6F //(0xDE >> 1)
+#define SI_REV           0x0000
+
 
 static bool i2cOk = false;
 
@@ -231,23 +245,153 @@ static THD_FUNCTION(Thread1, arg) {
 static THD_WORKING_AREA(waThread2, 1024);
 static THD_FUNCTION(Thread2, arg) {
     (void)arg;
-    uint8_t tx[1], rx[1];
+    uint8_t tx[4], rx[4];
     char string[256];
+//    uint8_t addr = 0x00;
 
     chRegSetThreadName("OrangeBlinker");
     while (TRUE) {
         palTogglePad(IOPORT1, 11);
+        chThdSleepMilliseconds(600);
+        continue;
 
+#if 0
+
+        if (addr == 0xff) {
+            console_println("Done ack search");
+            addr = 0;
+        }
+        if (addr == 0) {
+            console_println("Starting  ack search");
+            addr = 0;
+        }
+
+
+
+        tx[0] = 0;
+        rx[0] = 0;
+        i2cMasterTransmitTimeout(&I2CD0, addr, tx, 1,
+                rx, 1, TIME_INFINITE);
+
+        if (rx[0]) {
+            chsnprintf(string, 255, "Addr: %x, RX[0] %x", addr, rx[0]);
+            console_println(string);
+        }
+
+        addr++;
+
+
+        chThdSleepMilliseconds(30);
+        continue;
+#endif
+
+
+#if 0
         tx[0] = WHO_AM_I;
         i2cMasterTransmitTimeout(&I2CD0, MMA8451_ADDR, tx, 1,
                 rx, 1, TIME_INFINITE);
         i2cOk = (rx[0] == 0x1A) ? true : false;
         chsnprintf(string, 255, "Accel? %d %x", i2cOk, rx[0]);
+        //console_println(string);
+        //chThdSleepMilliseconds(600);
+        chThdSleepMilliseconds(600);
+#endif
+
+#if 0
+        if (rx[0] != SGTL5000_PART_ID) {
+            /* Install Audio codec */
+            chThdSleepMilliseconds(100);
+            continue;
+        }
+
+
+        tx[0] = REG_CHIP_CLK_CTRL >> 8;
+        tx[1] = REG_CHIP_CLK_CTRL;
+        rx[0] = rx[1] = 0;
+        i2cMasterTransmitTimeout(&I2CD0, SGTL5000_ADDR, tx, 2,
+                rx, 2, TIME_INFINITE);
+        chsnprintf(string, 255, "Audio Codec %x %x", rx[0], rx[1]);
+        console_println(string);
+        chThdSleepMilliseconds(60);
+
+enum {
+    SCLKFREQ        = 1 << 8,
+    I2S_MS          = 1 << 7,
+    SCLK_INV        = 1 << 6,
+
+    DLEN_32BIT      = 0 << 4,
+    DLEN_24BIT      = 1 << 4,
+    DLEN_20BIT      = 2 << 4,
+    DLEN_16BIT      = 3 << 4,
+
+    I2S_MODE_LEFT   = 0 << 2,
+    I2S_MODE_RIGHT  = 1 << 2,
+    I2S_MODE_PCM    = 2 << 2,
+
+    LRALIGN         = 1 << 1,
+    LRPOL           = 1 << 0,
+};
+
+
+
+        tx[0] = REG_CHIP_I2S_CTRL >> 8;
+        tx[1] = REG_CHIP_I2S_CTRL;
+        rx[0] = rx[1] = 0;
+        i2cMasterTransmitTimeout(&I2CD0, SGTL5000_ADDR, tx, 2,
+                rx, 2, TIME_INFINITE);
+        chsnprintf(string, 255, "REG_CHIP_I2S_CTRL %x %x", rx[0], rx[1]);
+        console_println(string);
+        chThdSleepMilliseconds(50);
+        int16_t value = rx[0] << 8;
+        value |= rx[1];
+        value |= I2S_MS | I2S_MODE_RIGHT | LRPOL;
+        tx[2] = value >> 8;
+        tx[3] = value;
+
+        rx[0] = rx[1] = 0;
+        i2cMasterTransmitTimeout(&I2CD0, SGTL5000_ADDR, tx, 4,
+                rx, 4, TIME_INFINITE);
+        chsnprintf(string, 255, "Modified sent : %x %x %x %x",
+                rx[0], rx[1], rx[2], rx[3]);
+        console_println(string);
+        chThdSleepMilliseconds(60);
+
+        i2cMasterTransmitTimeout(&I2CD0, SGTL5000_ADDR, tx, 2,
+                rx, 2, TIME_INFINITE);
+        chsnprintf(string, 255, "Modified to: %x %x", rx[0], rx[1]);
+        console_println(string);
+        chThdSleepMilliseconds(600);
+
+
+
+#endif
+
+#if 0
+        i2cMasterReceiveTimeout(&I2CD0, SGTL5000_ADDR,
+                rx, 4, TIME_INFINITE);
+        chsnprintf(string, 255, "Audio Codec %x %x %x %x",
+                                                    rx[0], rx[1], rx[2], rx[3]);
         console_println(string);
 
-
+        i2cMasterReceiveTimeout(&I2CD0, SGTL5000_ADDR,
+                rx, 4, TIME_INFINITE);
+        chsnprintf(string, 255, "Audio Codec %x %x %x %x",
+                                                    rx[0], rx[1], rx[2], rx[3]);
+        console_println(string);
 
         chThdSleepMilliseconds(600);
+
+        tx[0] = CHIP_ID >> 8;
+        tx[1] = CHIP_ID;
+        rx[0] = rx[1] = 0;
+        i2cMasterTransmitTimeout(&I2CD0, SGTL5000_ADDR, tx, 2,
+                rx, 2, TIME_INFINITE);
+
+        chsnprintf(string, 255, "Audio Codec %x %x", rx[0], rx[1]);
+        console_println(string);
+        chThdSleepMilliseconds(600);
+#endif
+
     }
     return 0;
 }
@@ -280,6 +424,9 @@ static THD_FUNCTION(Thread3, arg) {
 /*
  * Application entry point.
  */
+int32_t doFft(void) {
+    return 0;
+}
 int main(void) {
 
     /*
@@ -338,11 +485,17 @@ int main(void) {
     console_println("");
     console_println("*** ChibiOS/RT Here we go!");
     console_println("***");
+    console_println("***");
+    console_println("***");
+    console_println("***");
+    console_println("***");
+
+    if (sgtlInit(&I2CD0) == ERROR) {
+        codecError = TRUE;
+    }
+
 
     char string[256];
-    chsnprintf(string, 255, "Here we go! %d %x", 3, 0xbeef) ;
-    console_println(string);
-
     while (1) {
         /*
          * ADC linear conversion.
@@ -352,9 +505,12 @@ int main(void) {
         adcConvert(&ADCD2, &adcgrpcfg1, samples2, ADC_GRP1_BUF_DEPTH);
         adcConvert(&ADCD3, &adcgrpcfg1, samples3, ADC_GRP1_BUF_DEPTH);
 
+//        chsnprintf(string, 255, "Here we go! %f %d %x fft %d", 3.3, 3, 0xbeef, doFft()) ;
+  //      console_println(string);
 
 
-        chThdSleepMilliseconds(500);
+
+        chThdSleepMilliseconds(1000);
     }
 
 

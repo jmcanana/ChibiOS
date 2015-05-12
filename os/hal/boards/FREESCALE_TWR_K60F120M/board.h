@@ -18,7 +18,7 @@
 #define _BOARD_H_
 
 /*
- * Setup for Freescale Freedom K60N120 board.
+ * Setup for Freescale Freedom K60F120 board.
  */
 
 /*

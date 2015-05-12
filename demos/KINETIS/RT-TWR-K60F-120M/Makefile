@@ -41,7 +41,7 @@ endif
 
 # Enable this if you want to see the full log while compiling.
 ifeq ($(USE_VERBOSE_COMPILE),)
-  USE_VERBOSE_COMPILE = no
+  USE_VERBOSE_COMPILE = yes
 endif
 
 #
@@ -55,7 +55,7 @@ endif
 # Stack size to be allocated to the Cortex-M process stack. This stack is
 # the stack used by the main() thread.
 ifeq ($(USE_PROCESS_STACKSIZE),)
-  USE_PROCESS_STACKSIZE = 0x200
+  USE_PROCESS_STACKSIZE = 0x16384
 endif
 
 # Stack size to the allocated to the Cortex-M main/exceptions stack. This
@@ -63,6 +63,12 @@ endif
 ifeq ($(USE_EXCEPTIONS_STACKSIZE),)
   USE_EXCEPTIONS_STACKSIZE = 0x400
 endif
+
+# Enables the use of FPU on Cortex-M4 (no, softfp, hard).
+ifeq ($(USE_FPU),)
+      USE_FPU = hard
+endif
+
 
 #
 # Architecture or project specific options
@@ -85,6 +91,8 @@ include $(CHIBIOS)/os/rt/rt.mk
 include $(CHIBIOS)/os/rt/ports/ARMCMx/compilers/GCC/mk/port_k60x.mk
 include $(CHIBIOS)/test/rt/test.mk
 
+CMSIS_DSP = ../../../../CMSIS
+
 # Define linker script file here
 LDSCRIPT= $(PORTLD)/MK60FN1M0.ld
 
@@ -99,7 +107,12 @@ CSRC = $(PORTSRC) \
        $(BOARDSRC) \
        $(CHIBIOS)/os/various/chprintf.c \
        $(CHIBIOS)/os/various/memstreams.c \
-       main.c
+       main.c\
+       sgtl5000.c #\
+       arm_fft_bin_data.c\
+       arm_fft_bin_example_f32.c
+
+
 
 # C++ sources that can be compiled in ARM or THUMB mode depending on the global
 # setting.
@@ -130,7 +143,8 @@ ASMSRC = $(PORTASM)
 
 INCDIR = $(PORTINC) $(KERNINC) $(TESTINC) \
          $(HALINC) $(OSALINC) $(PLATFORMINC) $(BOARDINC) \
-         $(CHIBIOS)/os/various
+         $(CHIBIOS)/os/various \
+	 $(CMSIS_DSP)/Device/ARM/ARMCM4/Include
 
 #
 # Project, sources and paths
@@ -180,7 +194,7 @@ CPPWARN = -Wall -Wextra
 #
 
 # List all user C define here, like -D_DEBUG=1
-UDEFS =
+UDEFS = -D__FPU_PRESENT=1 -DARM_MATH_CM4 -DCHPRINTF_USE_FLOAT
 
 # Define ASM defines here
 UADEFS =
@@ -189,10 +203,10 @@ UADEFS =
 UINCDIR =
 
 # List the user directory to look for the libraries here
-ULIBDIR =
+ULIBDIR =/home/jmcanana/mathamLabs/dev/CMSIS/CMSIS/Lib/
 
 # List all user libraries here
-ULIBS =
+ULIBS =-ldsplib_lm4f -lm
 
 #
 # End of user defines

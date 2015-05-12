@@ -1,3 +1,32 @@
+/**
+ * @file    sgtl5000.c
+ * @brief   Device driver for the SGTL5000 Audio Codec
+ *
+ */
+
+#include <math.h> /* logf */
+#include "util.h"
+
+/*===========================================================================*/
+/* ChibiOS/RT  Resources                                                     */
+/*===========================================================================*/
+#include "hal.h"
+I2CDriver *I2CD_PTR;
+
+/*===========================================================================*/
+/* SGTL5000                                                                  */
+/*===========================================================================*/
+#define SGTL5000_ADDR    0x0A  //(0x14 >> 1)
+                                                            /* SYS_FS @ 48kHz */
+#define SYS_FS 48000000
+
+#define SYS_MCLK 24576000
+
+#define VDDA_MV                 3300
+#define VDDIO_MV                3300
+#define EXTERNAL_VDDD           FALSE
+
+
 #define REG_CHIP_ID                       0x0000
 #define REG_CHIP_DIG_POWER                0x0002
 #define REG_CHIP_CLK_CTRL                 0x0004
@@ -51,68 +80,6 @@
 #define REG_DAP_COEF_WR_A2_LSB            0x013A
 
 
-#if 0
-
-typedef struct {
-    uint16_t id;                    /* 0x0000 */
-    uint16_t digPower;              /* 0x0002 */
-    uint16_t clkCtrl;               /* 0x0004 */
-    uint16_t i2SCtrl;               /* 0x0006 */
-    uint16_t reserved;              /* 0x0008 */
-    uint16_t sssCtrl;               /* 0x000A */
-    uint16_t reserved1;             /* 0x000C */
-    uint16_t adcDacCtrl;            /* 0x000E */
-    uint16_t dacVol;                /* 0x0010 */
-    uint16_t reserved2;             /* 0x0012 */
-    uint16_t padStrength;           /* 0x0014 */
-    uint16_t reserved3[5];          /* 0x0016 - 0x001E */
-    uint16_t anaAdcCtrl;            /* 0x0020 */
-    uint16_t anaHpCtrl;             /* 0x0022 */
-    uint16_t anaCtrl;               /* 0x0024 */
-    uint16_t linregCtrl;            /* 0x0026 */
-    uint16_t refCtrl;               /* 0x0028 */
-    uint16_t micCtrl;               /* 0x002A */
-    uint16_t lineOutCtrl;           /* 0x002C */
-    uint16_t linOutVol;             /* 0x002E */
-    uint16_t anaPower;              /* 0x0030 */
-    uint16_t pllCtrl;               /* 0x0032 */
-    uint16_t clkTopCtrl;            /* 0x0034 */
-    uint16_t anaStatus;             /* 0x0036 */
-    uint16_t anaTest1;              /* 0x0038 */
-    uint16_t anaTest2;              /* 0x003A */
-    uint16_t shortCtlr;             /* 0x003C */
-    uint16_t reserved4[97];
-    uint16_t dapCtrl;               /* 0x0100 */
-    uint16_t dapPeq;                /* 0x0102 */
-    uint16_t dapBassEnhance;        /* 0x0104 */
-    uint16_t dapBassEnhanceCtrl;    /* 0x0106 */
-    uint16_t dapAudioEq;            /* 0x0108 */
-    uint16_t dapSgtlSurround;       /* 0x010A */
-    uint16_t dapFilterCoeffAccess;  /* 0x010C */
-    uint16_t dapCoeffWR_B0_MSB;     /* 0x010E */
-    uint16_t dapCoeffWR_B0_LSB;     /* 0x0110 */
-    uint16_t reserved5[2];
-    uint16_t dapAudioEqBassBand0;   /* 0x0116 */
-    uint16_t dapAudioEqBand1;       /* 0x0118 */
-    uint16_t dapAudioEqBand2;       /* 0x011A */
-    uint16_t dapAudioEqBand3;       /* 0x011C */
-    uint16_t dapAudioEqBand4;       /* 0x011E */
-    uint16_t dapMainChan;           /* 0x0120 */
-    uint16_t dapMixChan;            /* 0x0122 */
-    uint16_t dapAvcCtrl;            /* 0x0124 */
-    uint16_t dapAvcThreshold;       /* 0x0126 */
-    uint16_t dapAvtAttack;          /* 0x0128 */
-    uint16_t dapAvcDecay;           /* 0x012A */
-    uint16_t dapCoeffWR_B1_MSB;     /* 0x012C */
-    uint16_t dapCoeffWR_B1_LSB;     /* 0x012E */
-    uint16_t dapCoeffWR_B2_MSB;     /* 0x0130 */
-    uint16_t dapCoeffWR_B2_LSB;     /* 0x0132 */
-    uint16_t dapCoeffWR_A1_MSB;     /* 0x0134 */
-    uint16_t dapCoeffWR_A1_LSB;     /* 0x0136 */
-    uint16_t dapCoeffWR_A2_MSB;     /* 0x0138 */
-    uint16_t dapCoeffWR_A2_LSB;     /* 0x013A */
-};
-#endif
 
 /* REG_CHIP_CLK_CTRL */
 #define RATE_MODE_MASK     0x3
@@ -204,8 +171,8 @@ enum {
 
 /* REG_CHIP_DIG_POWER */
 enum {
-    ADC_POWERUP     = 1 << 6,
-    DAC_POWERUP     = 1 << 5,
+    DIG_ADC_POWERUP = 1 << 6,
+    DIG_DAC_POWERUP = 1 << 5,
     DAP_POWERUP     = 1 << 4,
 
     I2S_OUT_POWERUP = 1 << 1,
@@ -223,7 +190,7 @@ enum {
     SELECT_ADC = 1 << 2,
     EN_ZCD_ADC = 1 << 1,
     MUTE_ADC   = 1 << 0,
-}
+};
 
 /* REG_CHIP_ANA_POWER */
 enum {
@@ -238,9 +205,9 @@ enum {
     ADC_MONO                  = 1 << 6,
     REFTOP_POWERUP            = 1 << 5,
     HEADPHONE_POWERUP         = 1 << 4,
-    DAC_POWERUP               = 1 << 3,
+    ANA_DAC_POWERUP           = 1 << 3,
     CAPLESS_HEADPHONE_POWERUP = 1 << 2,
-    ADC_POWERUP               = 1 << 1,
+    ANA_ADC_POWERUP           = 1 << 1,
     LINEOUT_POWERUP           = 1 << 0,
 };
 
@@ -344,7 +311,8 @@ static int calcLoVagVal(int VDDIOmv)
 #define LO_VOL_RIGHT_SHIFT 8
 static int calcLoVol(int VDDIOmv, int VDDAmv)
 {
-    int value = (int) (40 * log((VDDAmv / 2.0) / (VDDIOmv / 2.0)) + 15);
+    int value = (int) (40
+                        * logf((float)((VDDAmv / 2.0) / (VDDIOmv / 2.0)) + 15));
 
     return value;
 }
@@ -404,51 +372,109 @@ enum {
 };
 
 
-
-    static int calcLvlAdjr(int shortValMv)
+static int regRead(uint16_t reg, uint16_t *data)
 {
-    int lvlAdjr;
+    int retVal = ERROR;
+    uint8_t tx[2];
+    uint8_t rx[2] = {0};
+    tx[0] = reg >> 8;
+    tx[1] = reg;
+    if (i2cMasterTransmitTimeout(I2CD_PTR, SGTL5000_ADDR, tx, 2,
+                                 rx, 2, TIME_INFINITE) == MSG_OK) {
+        retVal = !ERROR;
+    }
+    *data  = rx[0] << 8;
+    *data |= rx[1];
+    return retVal;
+}
 
-
-
+static int regWrite(uint16_t reg, uint16_t data)
+{
+    int retVal = ERROR;
+    uint8_t tx[4];
+    uint8_t rx[2] = {0};
+    tx[0] = reg >> 8;
+    tx[1] = reg;
+    tx[2] = data >> 8;
+    tx[3] = data;
+    if (i2cMasterTransmitTimeout(I2CD_PTR, SGTL5000_ADDR, tx, 4,
+                                 rx, 2, TIME_INFINITE) == MSG_OK) {
+        retVal = !ERROR;
+    }
+    return retVal;
 }
 
 
-
-static void regModify( uint16_t reg, uint16_t clearBits, uint16_t setBits)
+static int regModify( uint16_t reg, uint16_t clearBits, uint16_t setBits)
 {
+    int retVal = ERROR;
     uint16_t data;
 
-    regRead(reg, &data);
-    data &= ~clearBits;
-    data |=    setBits;
-
-    regWrite(reg, data);
+    if (regRead(reg, &data) == MSG_OK) {
+        data &= ~clearBits;
+        data |=    setBits;
+        if (regWrite(reg, data) == MSG_OK) {
+            retVal = !ERROR;
+        }
+    }
+    return retVal;
 }
 
-static void sgtlInit(void)
+int sgtlInit(I2CDriver *i2cp)
 {
+    uint16_t data;
+    int retVal = !ERROR;
+    I2CD_PTR = i2cp;
+
+#if 0
+    char string[80];
+    {
+        uint16_t data;
+        if (regRead(REG_CHIP_ID, &data) != ERROR) {
+            chsnprintf(string, 80, "REG_CHIP_ID %x ", data);
+            console_println(string);
+        }
+
+        if (regRead(REG_CHIP_I2S_CTRL, &data) != ERROR) {
+            chsnprintf(string, 80, "1: REG_CHIP_I2S_CTRL %x ", data);
+            console_println(string);
+        }
+
+    }
+    chThdSleepMilliseconds(300);
+
+    {
+        uint16_t data;
+        regModify(REG_CHIP_I2S_CTRL, 0x00, I2S_MS | I2S_MODE_RIGHT | LRPOL);
+        regRead(REG_CHIP_I2S_CTRL, &data);
+        chsnprintf(string, 80, "2. REG_CHIP_I2S_CTRL %x ", data);
+        console_println(string);
+    }
+    return retVal;
+#endif
+
+#if 1
 
                 /* --------------- Power Supply Configuration---------------- */
-#if defined(EXTERNAL_VDDD)
+if (EXTERNAL_VDDD) {
     regModify(REG_CHIP_ANA_POWER, STARTUP_POWERUP | LINREG_SIMPLE_POWERUP, 0);
-#endif
+}
 
-#if defined(VDDA_AND_VDDIO_LT_3_1V)
+if (VDDA_MV < 3100 && VDDIO_MV < 3100) {
     regModify(REG_CHIP_CLK_TOP_CTRL, 0, ENABLE_INT_OSC);
     regModify(REG_CHIP_ANA_POWER, 0, VDDC_CHRGPMP_POWERUP);
-#endif
+}
 
 
-#if defined(VDDA_AND_VDDIO_GT_3_1V)
+if (VDDA_MV >= 3100 && VDDIO_MV >= 3100) {
     regModify(REG_CHIP_LINREG_CTRL,
                            D_PROGRAMMING_MASK << D_PROGRAMMING_SHFT,
                            D_PROGRAMMING_1_60 | VDDC_MAN_ASSN | VDDC_ASSN_OVRD);
-#endif
+}
 
 
          /* ------ Reference Voltage and Bias Current Configuration---------- */
-    osalDbgAssert( VDDA_MV >= 1600 && VDDA_MV <= 3150 ,   "invalid VDDA_MV");
+    osalDbgAssert(VDDA_MV >= 1600 && VDDA_MV <= 3150 ,   "invalid VDDA_MV");
     regModify(REG_CHIP_REF_CTRL,
           (BIAS_CTRL_MASK << BIAS_CTRL_SHIFT) | (VAG_VAL_MASK << VAG_VAL_SHIFT),
            BIAS_CTRL_NOMINAL | calcVagVal(VDDA_MV));
@@ -481,14 +507,14 @@ static void sgtlInit(void)
     regModify(REG_CHIP_ANA_POWER, 0, LINREG_SIMPLE_POWERUP
                                    | VAG_POWERUP
                                    | HEADPHONE_POWERUP
-                                   | DAC_POWERUP
+                                   | ANA_DAC_POWERUP
                                    | CAPLESS_HEADPHONE_POWERUP
-                                   | ADC_POWERUP
+                                   | ANA_ADC_POWERUP
                                    | LINEOUT_POWERUP);
 
                                            /* Power up desired digital blocks */
-    regModify(REG_CHIP_DIG_POWER,   0, ADC_POWERUP
-                                     | DAC_POWERUP
+    regModify(REG_CHIP_DIG_POWER,   0, DIG_ADC_POWERUP
+                                     | DIG_DAC_POWERUP
                                      | DAP_POWERUP
                                      | I2S_OUT_POWERUP
                                      | I2S_IN_POWERUP);
@@ -505,8 +531,6 @@ static void sgtlInit(void)
 
 
        /* --------------------System MCLK and Sample Clock-------------------- */
-                                                            /* SYS_FS @ 48kHz */
-#define SYS_FS 48000000
     regModify(REG_CHIP_CLK_CTRL,
                            RATE_MODE_MASK << RATE_MODE_SHIFT, RATE_MODE_SYS_FS);
     regModify(REG_CHIP_CLK_CTRL, SYS_FS_MASK << SYS_FS_SHIFT, SYS_FS_48KHZ);
@@ -516,13 +540,17 @@ static void sgtlInit(void)
                            MCLK_FREQ_MASK << MCLK_FREQ_SHIFT, MCLK_FREQ_256_FS);
 
                            /* Configure the I2S clocks in master mode.
-                            * NOTE: I2S LRCLK is same as the system sample clock.
+                            * NOTE: I2S LRCLK is same as system sample clock.
                             *
                             * Use 16Bit resolution.
                             *
+                            * PCM Format A:  Data word begins one SCLK bit
+                            * following the I2S_LRCLK transition.
+                            *
                             */
      regModify(REG_CHIP_I2S_CTRL, (DLEN_MASK << DLEN_SHIFT),
-                                   DLEN_16BIT | I2S_MS);
+                                   SCLKFREQ | I2S_MS     | SCLK_INV
+                                            | DLEN_16BIT | I2S_MODE_PCM);
 
 
        /* --------------------PLL Configuration          -------------------- */
@@ -566,5 +594,6 @@ static void sgtlInit(void)
     regModify(REG_CHIP_SSS_CTRL, I2S_SELECT_MASK << I2S_SELECT_SHIFT,
                                  I2S_SELECT_ADC);
 
+#endif
 }
 
