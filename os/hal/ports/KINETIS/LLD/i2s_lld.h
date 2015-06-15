@@ -50,8 +50,8 @@
  * @details If set to @p TRUE the support for I2S0 is included.
  * @note    The default is @p TRUE.
  */
-#if !defined(PLATFORM_I2S_USE_I2S0) || defined(__DOXYGEN__)
-#define PLATFORM_I2S_USE_I2S0                  FALSE
+#if !defined(KINETIS_I2S_USE_I2S0) || defined(__DOXYGEN__)
+#define KINETIS_I2S_USE_I2S0                  FALSE
 #endif
 
 /**
@@ -59,8 +59,8 @@
  * @details If set to @p TRUE the support for I2S1 is included.
  * @note    The default is @p TRUE.
  */
-#if !defined(PLATFORM_I2S_USE_I2S1) || defined(__DOXYGEN__)
-#define PLATFORM_I2S_USE_I2S1                  FALSE
+#if !defined(KINETIS_I2S_USE_I2S1) || defined(__DOXYGEN__)
+#define KINETIS_I2S_USE_I2S1                  FALSE
 #endif
 
 
@@ -112,10 +112,6 @@ typedef struct {
    */
   i2scallback_t             end_cb;
   /* End of the mandatory fields.*/
-
-  /* @brief Low-level register access. */
-  I2S_TypeDef               *i2s;
-
 } I2SConfig;
 
 /**
@@ -132,6 +128,10 @@ struct I2SDriver {
   const I2SConfig           *config;
   /* End of the mandatory fields.*/
 
+  /* @brief Low-level register access. */
+  I2S_TypeDef               *i2s;
+
+#if 0
   /**
    * @brief   Number of bytes/words of data to transfer.
    */
@@ -148,7 +148,7 @@ struct I2SDriver {
    * @brief   Pointer to the buffer to put received data.
    */
   uint8_t                   *rxbuf;
-
+#endif
 };
 
 /*===========================================================================*/
@@ -159,12 +159,12 @@ struct I2SDriver {
 /* External declarations.                                                    */
 /*===========================================================================*/
 
-#if PLATFORM_I2S_USE_I2S0 && !defined(__DOXYGEN__)
+#if KINETIS_I2S_USE_I2S0 && !defined(__DOXYGEN__)
 extern I2SDriver I2SD0;
 #endif
 
 
-#if PLATFORM_I2S_USE_I2S1 && !defined(__DOXYGEN__)
+#if KINETIS_I2S_USE_I2S1 && !defined(__DOXYGEN__)
 extern I2SDriver I2SD1;
 #endif
 
@@ -174,8 +174,7 @@ extern "C" {
   void i2s_lld_init(void);
   void i2s_lld_start(I2SDriver *i2sp);
   void i2s_lld_stop(I2SDriver *i2sp);
-  void i2s_lld_start_exchange(I2SDriver *i2sp, size_t n,
-                                               const void *txbuf, void *rxbuf);
+  void i2s_lld_start_exchange(I2SDriver *i2sp);
   void i2s_lld_stop_exchange(I2SDriver *i2sp);
 #ifdef __cplusplus
 }

@@ -291,9 +291,9 @@ struct I2SDriver {
   const I2SConfig           *config;
   /* End of the mandatory fields.*/
   /**
-   * @brief   Pointer to the SPIx registers block.
+   * @brief   Pointer to the I2Sx registers block.
    */
-  SPI_TypeDef               *spi;
+  I2S_TypeDef               *i2s;
   /**
    * @brief   Calculated part of the I2SCFGR register.
    */

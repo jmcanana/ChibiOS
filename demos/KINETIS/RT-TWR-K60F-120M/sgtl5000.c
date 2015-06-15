@@ -453,108 +453,109 @@ int sgtlInit(I2CDriver *i2cp)
     return retVal;
 #endif
 
-#if 1
 
-                /* --------------- Power Supply Configuration---------------- */
-if (EXTERNAL_VDDD) {
-    regModify(REG_CHIP_ANA_POWER, STARTUP_POWERUP | LINREG_SIMPLE_POWERUP, 0);
-}
+    /* --------------- Power Supply Configuration---------------- */
+    if (EXTERNAL_VDDD) {
+        regModify(REG_CHIP_ANA_POWER, STARTUP_POWERUP
+                                    | LINREG_SIMPLE_POWERUP, 0);
+    }
 
-if (VDDA_MV < 3100 && VDDIO_MV < 3100) {
-    regModify(REG_CHIP_CLK_TOP_CTRL, 0, ENABLE_INT_OSC);
-    regModify(REG_CHIP_ANA_POWER, 0, VDDC_CHRGPMP_POWERUP);
-}
-
-
-if (VDDA_MV >= 3100 && VDDIO_MV >= 3100) {
-    regModify(REG_CHIP_LINREG_CTRL,
-                           D_PROGRAMMING_MASK << D_PROGRAMMING_SHFT,
-                           D_PROGRAMMING_1_60 | VDDC_MAN_ASSN | VDDC_ASSN_OVRD);
-}
+    if (VDDA_MV < 3100 && VDDIO_MV < 3100) {
+        regModify(REG_CHIP_CLK_TOP_CTRL, 0, ENABLE_INT_OSC);
+        regModify(REG_CHIP_ANA_POWER, 0, VDDC_CHRGPMP_POWERUP);
+    }
 
 
-         /* ------ Reference Voltage and Bias Current Configuration---------- */
+    if (VDDA_MV >= 3100 && VDDIO_MV >= 3100) {
+        regModify(REG_CHIP_LINREG_CTRL,
+                D_PROGRAMMING_MASK << D_PROGRAMMING_SHFT,
+                D_PROGRAMMING_1_60 | VDDC_MAN_ASSN | VDDC_ASSN_OVRD);
+    }
+
+
+    /* ------ Reference Voltage and Bias Current Configuration---------- */
     osalDbgAssert(VDDA_MV >= 1600 && VDDA_MV <= 3150 ,   "invalid VDDA_MV");
     regModify(REG_CHIP_REF_CTRL,
-          (BIAS_CTRL_MASK << BIAS_CTRL_SHIFT) | (VAG_VAL_MASK << VAG_VAL_SHIFT),
-           BIAS_CTRL_NOMINAL | calcVagVal(VDDA_MV));
+            (BIAS_CTRL_MASK << BIAS_CTRL_SHIFT)
+          | (VAG_VAL_MASK << VAG_VAL_SHIFT),
+            BIAS_CTRL_NOMINAL | calcVagVal(VDDA_MV));
 
     osalDbgAssert( VDDIO_MV >= 1600 && VDDIO_MV <= 3350 ,   "invalid VDDIO_MV");
     regModify(REG_CHIP_LINE_OUT_CTRL, (OUT_CURRENT_MASK << OUT_CURRENT_SHIFT)
-                                    | (LO_VAGCNTRL_MASK << LO_VAGCNTRL_SHIFT),
-                                  OUT_CURRENT_0_36_MA | calcLoVagVal(VDDIO_MV));
+            | (LO_VAGCNTRL_MASK << LO_VAGCNTRL_SHIFT),
+            OUT_CURRENT_0_36_MA | calcLoVagVal(VDDIO_MV));
 
-       /* ----------------Other Analog Block Configurations------------------ */
+    /* ----------------Other Analog Block Configurations------------------ */
 
-                                              /* Slow ramp up to minimize pop */
+    /* Slow ramp up to minimize pop */
     regModify(REG_CHIP_REF_CTRL,   0, SMALL_POP);
-                                          /* Short detect mode for headphones */
+    /* Short detect mode for headphones */
     regModify(REG_CHIP_SHORT_CTRL, (LVLADJR_MASK << LVLADJR_SHIFT)
-                                 | (LVLADJL_MASK << LVLADJL_SHIFT)
-                                 | (LVLADJC_MASK << LVLADJC_SHIFT)
-                                 | (MODE_LR_MASK << MODE_LR_SHIFT)
-                                 | (MODE_CM_MASK << MODE_CM_SHIFT),
-                                     LVLADJR_75 | LVLADJL_75
-                                   | MODE_CM_SHORT_DETECT_ENABLE_WITH_AUTO_RESET
-                                   | MODE_LR_SHORT_DETECT_ENABLE_WITH_RESET );
+            | (LVLADJL_MASK << LVLADJL_SHIFT)
+            | (LVLADJC_MASK << LVLADJC_SHIFT)
+            | (MODE_LR_MASK << MODE_LR_SHIFT)
+            | (MODE_CM_MASK << MODE_CM_SHIFT),
+            LVLADJR_75 | LVLADJL_75
+            | MODE_CM_SHORT_DETECT_ENABLE_WITH_AUTO_RESET
+            | MODE_LR_SHORT_DETECT_ENABLE_WITH_RESET );
 
-                            /* Zero-cross for headphones out (HP_OUT) and ADC */
+    /* Zero-cross for headphones out (HP_OUT) and ADC */
     regModify(REG_CHIP_ANA_CTRL,   0, EN_ZCD_HP | EN_ZCD_ADC);
 
-       /* ----------------Power up Inputs/Outputs/Digital Blocks------------- */
+    /* ----------------Power up Inputs/Outputs/Digital Blocks------------- */
 
-                                            /* Power up LINEOUT, HP, ADC, DAC */
+    /* Power up LINEOUT, HP, ADC, DAC */
     regModify(REG_CHIP_ANA_POWER, 0, LINREG_SIMPLE_POWERUP
-                                   | VAG_POWERUP
-                                   | HEADPHONE_POWERUP
-                                   | ANA_DAC_POWERUP
-                                   | CAPLESS_HEADPHONE_POWERUP
-                                   | ANA_ADC_POWERUP
-                                   | LINEOUT_POWERUP);
+            | VAG_POWERUP
+            | HEADPHONE_POWERUP
+            | ANA_DAC_POWERUP
+            | CAPLESS_HEADPHONE_POWERUP
+            | ANA_ADC_POWERUP
+            | LINEOUT_POWERUP);
 
-                                           /* Power up desired digital blocks */
+    /* Power up desired digital blocks */
     regModify(REG_CHIP_DIG_POWER,   0, DIG_ADC_POWERUP
-                                     | DIG_DAC_POWERUP
-                                     | DAP_POWERUP
-                                     | I2S_OUT_POWERUP
-                                     | I2S_IN_POWERUP);
+            | DIG_DAC_POWERUP
+            | DAP_POWERUP
+            | I2S_OUT_POWERUP
+            | I2S_IN_POWERUP);
 
 
-       /* --------------------Set LINEOUT Volume Level----------------------- */
+    /* --------------------Set LINEOUT Volume Level----------------------- */
 
     data  = calcLoVol(VDDIO_MV, VDDA_MV);
     regModify(REG_CHIP_LINE_OUT_VOL,
-                                   (LO_VOL_X_MASK << LO_VOL_RIGHT_SHIFT)
-                                 | (LO_VOL_X_MASK << LO_VOL_LEFT_SHIFT),
-                                   (data & LO_VOL_X_MASK) << LO_VOL_RIGHT_SHIFT
-                                 | (data & LO_VOL_X_MASK) << LO_VOL_LEFT_SHIFT);
+            (LO_VOL_X_MASK << LO_VOL_RIGHT_SHIFT)
+            | (LO_VOL_X_MASK << LO_VOL_LEFT_SHIFT),
+            (data & LO_VOL_X_MASK) << LO_VOL_RIGHT_SHIFT
+            | (data & LO_VOL_X_MASK) << LO_VOL_LEFT_SHIFT);
 
 
-       /* --------------------System MCLK and Sample Clock-------------------- */
+    /* --------------------System MCLK and Sample Clock-------------------- */
     regModify(REG_CHIP_CLK_CTRL,
-                           RATE_MODE_MASK << RATE_MODE_SHIFT, RATE_MODE_SYS_FS);
+            RATE_MODE_MASK << RATE_MODE_SHIFT, RATE_MODE_SYS_FS);
     regModify(REG_CHIP_CLK_CTRL, SYS_FS_MASK << SYS_FS_SHIFT, SYS_FS_48KHZ);
 
-                                                        /* MCLK_FREQ @ 256*Fs */
+    /* MCLK_FREQ @ 256*Fs */
     regModify(REG_CHIP_CLK_CTRL,
-                           MCLK_FREQ_MASK << MCLK_FREQ_SHIFT, MCLK_FREQ_256_FS);
+            MCLK_FREQ_MASK << MCLK_FREQ_SHIFT, MCLK_FREQ_256_FS);
 
-                           /* Configure the I2S clocks in master mode.
-                            * NOTE: I2S LRCLK is same as system sample clock.
-                            *
-                            * Use 16Bit resolution.
-                            *
-                            * PCM Format A:  Data word begins one SCLK bit
-                            * following the I2S_LRCLK transition.
-                            *
-                            */
-     regModify(REG_CHIP_I2S_CTRL, (DLEN_MASK << DLEN_SHIFT),
-                                   SCLKFREQ | I2S_MS     | SCLK_INV
-                                            | DLEN_16BIT | I2S_MODE_PCM);
+    /* Configure the I2S clocks in master mode.
+     * NOTE: I2S LRCLK is same as system sample clock.
+     *
+     * Use 16Bit resolution.
+     *
+     * PCM Format A:  Data word begins one SCLK bit
+     * following the I2S_LRCLK transition.
+     *
+     */
+    regModify(REG_CHIP_I2S_CTRL, (DLEN_MASK << DLEN_SHIFT),
+            SCLKFREQ | I2S_MS     | SCLK_INV
+            | DLEN_16BIT | I2S_MODE_PCM);
 
 
-       /* --------------------PLL Configuration          -------------------- */
-                                                      /* Scale external clock */
+    /* --------------------PLL Configuration          -------------------- */
+    /* Scale external clock */
     uint32_t sysMCLK;
     if (SYS_MCLK > 17000000) {
         sysMCLK = SYS_MCLK / 2;
@@ -564,36 +565,37 @@ if (VDDA_MV >= 3100 && VDDIO_MV >= 3100) {
         sysMCLK = SYS_MCLK;
     }
 
-                                                                 /* Scale PLL */
+    /* Scale PLL */
     uint32_t pllOutputFreq;
     if (SYS_FS == 44100000) {
-        pllOutputFreq = 180633600000;
+        pllOutputFreq = 180633600;
     }
     else {
-        pllOutputFreq = 196608000000;
+        pllOutputFreq = 196608000;
     }
 
     uint32_t intDivisor  =   pllOutputFreq / sysMCLK;
     uint32_t fracDivisor = ((pllOutputFreq / sysMCLK) - intDivisor) * 2048;
 
     regModify(REG_CHIP_PLL_CTRL,   0xFFFF,
-                       (intDivisor  & INT_DIVISOR_MASK)  << INT_DIVISOR_SHIFT
-                    || (fracDivisor & FRAC_DIVISOR_MASK) << FRAC_DIVISOR_SHIFT);
+            (intDivisor  & INT_DIVISOR_MASK)  << INT_DIVISOR_SHIFT
+            || (fracDivisor & FRAC_DIVISOR_MASK) << FRAC_DIVISOR_SHIFT);
 
-                                                              /* Power up PLL */
+    /* Power up PLL */
     regModify(REG_CHIP_ANA_POWER, 0, PLL_POWERUP);
     regModify(REG_CHIP_ANA_POWER, 0, VCOAMP_POWERUP);
 
 
 
 
-         /* --------------Input Routing: MIC_IN_ -> ADC -> I2S_OUT -----------*/
-                                                   /* Set ADC input to MIC_IN */
+    /* --------------Input Routing: MIC_IN_ -> ADC -> I2S_OUT -----------*/
+    /* Set ADC input to MIC_IN */
     regModify(REG_CHIP_ANA_CTRL, SELECT_ADC, 0);
-                                                      /* Route ADC to I2S_OUT */
+    /* Route ADC to I2S_OUT */
     regModify(REG_CHIP_SSS_CTRL, I2S_SELECT_MASK << I2S_SELECT_SHIFT,
-                                 I2S_SELECT_ADC);
+            I2S_SELECT_ADC);
 
-#endif
+    return retVal;
+
 }
 

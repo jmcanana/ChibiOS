@@ -88,6 +88,40 @@ I2CConfig i2c0Config = {
 };
 
 
+/* --------------------   I2S ---------------------------- */
+binary_semaphore_t i2s_rx_sem;
+uint16_t rxBuffer[2048];
+uint16_t txBuffer[2048];
+
+
+static void i2s_end_cb(I2SDriver *i2sp, size_t offset, size_t n)
+{
+    size_t i;
+    char string[255];
+    (void) i2sp;
+
+    osalSysLockFromISR();
+    chBSemSignalI(&i2s_rx_sem);
+    osalSysUnlockFromISR();
+
+    for (i = 0; i < n; i++)
+    {
+        chsnprintf(string, 255, "buf[i] = %x", i, rxBuffer[offset + i]);
+        console_println(string);
+
+    }
+
+
+
+}
+
+
+static const I2SConfig i2sCfg = {
+    .tx_buffer  = rxBuffer,
+    .rx_buffer  = txBuffer,
+    .size       = 1024,
+    .end_cb     = i2s_end_cb,
+};
 
 
 
@@ -116,12 +150,13 @@ static adcsample_t samples1[ADC_GRP1_NUM_CHANNELS * ADC_GRP1_BUF_DEPTH];
 static adcsample_t samples2[ADC_GRP1_NUM_CHANNELS * ADC_GRP1_BUF_DEPTH];
 static adcsample_t samples3[ADC_GRP1_NUM_CHANNELS * ADC_GRP1_BUF_DEPTH];
 
-static void adc_end_cb(ADCDriver *adcp, adcsample_t *buffer, size_t n) {
+static void adc_end_cb(ADCDriver *adcp, adcsample_t *buffer, size_t n)
+{
 
 #if 0
     (void)adcp;
-    (void)n;
 #endif
+    (void)n;
     int adcIdx = -1;
 
     /*
@@ -245,8 +280,8 @@ static THD_FUNCTION(Thread1, arg) {
 static THD_WORKING_AREA(waThread2, 1024);
 static THD_FUNCTION(Thread2, arg) {
     (void)arg;
-    uint8_t tx[4], rx[4];
-    char string[256];
+//    uint8_t tx[4], rx[4];
+//    char string[256];
 //    uint8_t addr = 0x00;
 
     chRegSetThreadName("OrangeBlinker");
@@ -398,10 +433,19 @@ enum {
 
 static THD_WORKING_AREA(waThread3, 512);
 static THD_FUNCTION(Thread3, arg) {
-    char string[256];
+//    char string[256];
     (void)arg;
     chRegSetThreadName("BlueBlinker");
     while (TRUE) {
+        i2sStartExchange(&I2SD0);
+        chBSemWait(&i2s_rx_sem);
+        i2sStopExchange(&I2SD0);
+        /* Turn on codec */
+        /* Start I2S transaction */
+        /* Wait for semiphore from i2s_end_cb */
+        /* FFT data */
+        /* Turn off codec */
+        /* Booyeah! */
 #if 0
         for (int i =0; i < _MAX_ADC; i++) {
             chsnprintf(string, 255, "ADC_%d: Pot: %d, Temp: %d, vamb %d", i,
@@ -413,7 +457,7 @@ static THD_FUNCTION(Thread3, arg) {
 
 
         palTogglePad(IOPORT1, 10);
-        chThdSleepMilliseconds(2000);
+        chThdSleepMilliseconds(5000);
     }
 
     return 0;
@@ -427,6 +471,8 @@ static THD_FUNCTION(Thread3, arg) {
 int32_t doFft(void) {
     return 0;
 }
+
+int sgtlInit(I2CDriver *i2cp);
 int main(void) {
 
     /*
@@ -442,9 +488,15 @@ int main(void) {
     /*
      * Activate the I2C drivers.
      */
-
-
     i2cStart(&I2CD0, &i2c0Config);
+
+    /*
+     * Activate the I2S drivers.
+     */
+    i2sStart(&I2SD0, &i2sCfg);
+    chBSemObjectInit(&i2s_rx_sem, TRUE);
+
+
 
     /*
      * Activate the ADC drivers.
@@ -473,6 +525,16 @@ int main(void) {
      */
     sdStart(&SD6, NULL);
 
+
+    /*
+     * Configure CODEC.
+     */
+
+    if (sgtlInit(&I2CD0) == ERROR) {
+        codecError = TRUE;
+    }
+
+
     /*
      * Creates the blinker threads.
      */
@@ -490,9 +552,6 @@ int main(void) {
     console_println("***");
     console_println("***");
 
-    if (sgtlInit(&I2CD0) == ERROR) {
-        codecError = TRUE;
-    }
 
 
     char string[256];

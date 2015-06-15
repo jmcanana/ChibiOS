@@ -102,6 +102,10 @@
 #define KINETIS_I2C_USE_I2C1                  TRUE
 
 /*
+ * I2S driver system settings.
+ */
+#define KINETIS_I2S_USE_I2S0                  TRUE
+/*
  * ADC driver system settings.
  */
 #define KINETIS_ADC_USE_ADC0                  TRUE

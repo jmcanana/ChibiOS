@@ -34,9 +34,9 @@
 #define I2S_WORD_SIZE    16
 #define I2S_FIFO_FBS    (FIFO_MSB_FIRST_16BIT_WORDS_MSB)
 
-/* TODO: Shouldn't DMAMUX Slots and DMA channels be specified in 
+/* TODO: Shouldn't DMAMUX Slots and DMA channels be specified in
  * a chip specific file?  e.g. mk60f12.h or halconf.h?  What happens
- * when two peripherals decide locally to use the same DMA channel? 
+ * when two peripherals decide locally to use the same DMA channel?
  */
 /** @brief I2S0 DMA defines.*/
 #if KINETIS_I2S_USE_I2S0 || defined(__DOXYGEN__)
@@ -129,7 +129,7 @@ enum {
 
 typedef struct {
     int dmaMux;
-    int rxDmaIrqPriority;
+    int dmaIrqPriority;
 
     int rxDmaMuxChannel;
     int rxDmaChannel;
@@ -141,30 +141,34 @@ typedef struct {
 } i2sDmaResources_t;
 
 i2sDmaResources_t i2sDmaResources[] = {
+#if KINETIS_I2S_USE_I2S0
     [0] = {
-        dmaMux           = KINETIS_I2S0_DMA_MUX,
-        rxDmaIrqPriority = KINETIS_I2S0_RX_DMA_IRQ_PRIORITY,
+        .dmaMux           = KINETIS_I2S0_DMA_MUX,
+        .dmaIrqPriority = KINETIS_I2S0_RX_DMA_IRQ_PRIORITY,
 
-        rxDmaMuxChannel  = KINETIS_I2S0_RX_DMAMUX_CHANNEL,
-        rxDmaChannel     = KINETIS_I2S0_RX_DMA_CHANNEL,
-        rxDmaSource      = DMAMUX_I2S0_RX_SOURCE,
+        .rxDmaMuxChannel  = KINETIS_I2S0_RX_DMAMUX_CHANNEL,
+        .rxDmaChannel     = KINETIS_I2S0_RX_DMA_CHANNEL,
+        .rxDmaSource      = DMAMUX_I2S0_RX_SOURCE,
 
-        txDmaMuxChannel  = KINETIS_I2S0_TX_DMAMUX_CHANNEL,
-        txDmaChannel     = KINETIS_I2S0_TX_DMA_CHANNEL,
-        txDmaSource      = DMAMUX_I2S0_TX_SOURCE,
+        .txDmaMuxChannel  = KINETIS_I2S0_TX_DMAMUX_CHANNEL,
+        .txDmaChannel     = KINETIS_I2S0_TX_DMA_CHANNEL,
+        .txDmaSource      = DMAMUX_I2S0_TX_SOURCE,
     },
+#endif
+#if KINETIS_I2S_USE_I2S1
     [1] = {
-        dmaMux           = KINETIS_I2S1_DMA_MUX,
-        rxDmaIrqPriority = KINETIS_I2S1_RX_DMA_IRQ_PRIORITY,
+        .dmaMux           = KINETIS_I2S1_DMA_MUX,
+        .dmaIrqPriority = KINETIS_I2S1_RX_DMA_IRQ_PRIORITY,
 
-        rxDmaMuxChannel  = KINETIS_I2S1_RX_DMAMUX1_CHANNEL,
-        rxDmaChannel     = KINETIS_I2S1_RX_DMA_CHANNEL,
-        rxDmaSource      = DMAMUX_I2S1_RX_SOURCE,
+        .rxDmaMuxChannel  = KINETIS_I2S1_RX_DMAMUX1_CHANNEL,
+        .rxDmaChannel     = KINETIS_I2S1_RX_DMA_CHANNEL,
+        .rxDmaSource      = DMAMUX_I2S1_RX_SOURCE,
 
-        txDmaMuxChannel  = KINETIS_I2S1_TX_DMAMUX1_CHANNEL,
-        txDmaChannel     = KINETIS_I2S1_TX_DMA_CHANNEL,
-        txDmaSource      = DMAMUX_I2S1_TX_SOURCE,
+        .txDmaMuxChannel  = KINETIS_I2S1_TX_DMAMUX1_CHANNEL,
+        .txDmaChannel     = KINETIS_I2S1_TX_DMA_CHANNEL,
+        .txDmaSource      = DMAMUX_I2S1_TX_SOURCE,
     },
+#endif
 };
 
 
@@ -209,7 +213,7 @@ enum {
 
     FIFO_MSB_FIRST_32BIT_WORDS     = 0x1F,/*bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb*/
     FIFO_MSB_FIRST_24BIT_WORDS_LSB = 0x17,/*xxxxxxbbbbbbbbbbbbbbbbbbbbbbbbbb*/
-    FIFO_MSB_FIRST_24BIT_WORDS_MSB = 0x1F /*bbbbbbbbbbbbbbbbbbbbbbbbbbxxxxxx*/
+    FIFO_MSB_FIRST_24BIT_WORDS_MSB = 0x1F,/*bbbbbbbbbbbbbbbbbbbbbbbbbbxxxxxx*/
     FIFO_MSB_FIRST_20BIT_WORDS_LSB = 0x13,/*xxxxxxxxxxxxbbbbbbbbbbbbbbbbbbbb*/
     FIFO_MSB_FIRST_20BIT_WORDS_MSB = 0x1F,/*bbbbbbbbbbbbbbbbbbbbxxxxxxxxxxxx*/
     FIFO_MSB_FIRST_16BIT_WORDS_LSB = 0x0F,/*xxxxxxxxxxxxxxxxbbbbbbbbbbbbbbbb*/
@@ -232,74 +236,71 @@ static uint16_t dmaTxDummy = 0xFFFF;
 
 /**
  * @brief   DMA transfer controller.
- * @note    Sets up DMA TX and RX 
+ * @note    Sets up DMA TX and RX
  *
  * @param[in] i2sp         pointer to an I2SDriver
  */
 
+#if 0
 static void i2s_start_xfer(I2Sriver *i2sp)
 {
-        int i2sIdx = -1;
-        int rxDmaCh;
-        int txDmaCh;
-        if (&I2SD0 == i2sp) {
-            i2sIdx  = I2S_INDEX_0;
-        }
-        else if (&I2SD1 == i2sp) {
-            i2sIdx = I2S_INDEX_1;
-        }
+    int i2sIdx = -1;
+    int rxDmaCh;
+    int txDmaCh;
+    if (&I2SD0 == i2sp) {
+        i2sIdx  = I2S_INDEX_0;
+    }
+    else if (&I2SD1 == i2sp) {
+        i2sIdx = I2S_INDEX_1;
+    }
 
-        chDbgAssert(i2sCtx != -1, "Invalid i2s instance");
-        if (i2sCtx == -1) {
-            return;
-        }
-
-        rxDmaCh = i2sDmaResources[i2sIdx].rxDmaSource;
-        txDmaCh = i2sDmaResources[i2sIdx].txDmaSource;
+    rxDmaCh = i2sDmaResources[i2sIdx].rxDmaSource;
+    txDmaCh = i2sDmaResources[i2sIdx].txDmaSource;
 
 
-                                                             /* Flush RX FIFO */
-        i2sp->i2s->RCSR |= I2Sx_RCSR_FR;
+    /* Flush RX FIFO */
+    i2sp->i2s->RCSR |= I2Sx_RCSR_FR;
 
 
 
-        /* Configure RX DMA */
-        if (i2sp->rxbuf) {
-            DMA->TCD[rxDmaCh].DADDR = (uint32_t)spip->rxbuf;
-            DMA->TCD[rxDmaCh].DOFF  = I2S_WORD_SIZE;
-        } else {
-            DMA->TCD[rxDmaCh].DADDR = (uint32_t)&dmaRxDummy;
-            DMA->TCD[rxDmaCh].DOFF = 0;
-        }
-        DMA->TCD[rxDmaCh].BITER_ELINKNO = i2sp->count;
-        DMA->TCD[rxDmaCh].CITER_ELINKNO = i2sp->count;
+    /* Configure RX DMA */
+    if (i2sp->config->rx_buffer) {
+        DMA->TCD[rxDmaCh].DADDR = (uint32_t)i2sp->config->rx_buffer;
+        DMA->TCD[rxDmaCh].DOFF  = I2S_WORD_SIZE;
+    } else {
+        DMA->TCD[rxDmaCh].DADDR = (uint32_t)&dmaRxDummy;
+        DMA->TCD[rxDmaCh].DOFF = 0;
+    }
+    DMA->TCD[rxDmaCh].BITER_ELINKNO = i2sp->config->size;
+    DMA->TCD[rxDmaCh].CITER_ELINKNO = i2sp->config->size;
 
-        /* Enable Request Register (ERQ) for RX by writing 0 to SERQ */
-        DMA->SERQ = rxDmaCh;
+    /* Enable Request Register (ERQ) for RX by writing 0 to SERQ */
+    DMA->SERQ = rxDmaCh;
 
-        /* Configure TX DMA */
-        if (i2sp->txbuf) {
-            DMA->TCD[txDmaCh].SADDR =  (uint32_t)i2sp->txbuf;
-            DMA->TCD[txDmaCh].SOFF  = I2S_WORD_SIZE;
-        } else {
-            DMA->TCD[txDmaCh].SADDR =  (uint32_t)&dmaTxDummy;
-            DMA->TCD[txDmaCh].SOFF = 0;
-        }
-        DMA->TCD[txDmaCh].BITER_ELINKNO = i2sp->count;
-        DMA->TCD[txDmaCh].CITER_ELINKNO = i2sp->count;
+    /* Configure TX DMA */
+    if (i2sp->config->tx_buffer) {
+        DMA->TCD[txDmaCh].SADDR =  (uint32_t)i2sp->config->tx_buffer;
+        DMA->TCD[txDmaCh].SOFF  = I2S_WORD_SIZE;
+    } else {
+        DMA->TCD[txDmaCh].SADDR =  (uint32_t)&dmaTxDummy;
+        DMA->TCD[txDmaCh].SOFF = 0;
+    }
+    DMA->TCD[txDmaCh].BITER_ELINKNO = i2sp->config->size;
+    DMA->TCD[txDmaCh].CITER_ELINKNO = i2sp->config->size;
 
-        /* Enable Request Register (ERQ) for TX by writing 1 to SERQ */
-        DMA->SERQ = txDmaCh;
+    /* Enable Request Register (ERQ) for TX by writing 1 to SERQ */
+    DMA->SERQ = txDmaCh;
 
-                                                       /* Enable DMA requests */
-        i2sp->i2s->RCSR |= I2Sx_RCSR_FWDE | I2Sx_RCSR_FRDE;
+    /* Enable DMA requests */
+    i2sp->i2s->RCSR |= I2Sx_RCSR_FWDE | I2Sx_RCSR_FRDE;
 
-                                                    /* Enable RX in stop mode */
-        i2sp->i2s->RCSR |= I2Sx_RCSR_STOPE;
+    /* Enable RX in stop mode */
+    i2sp->i2s->RCSR |= I2Sx_RCSR_STOPE;
 
 }
+#endif
 
-static void spi_stop_xfer(SPIDriver *spip)
+static void i2s_stop_xfer(I2SDriver *i2sp)
 {
 
                                                     /* Halt RX in stop mode */
@@ -311,8 +312,7 @@ static void spi_stop_xfer(SPIDriver *spip)
 }
 
 
-
-
+#if 0
 
 /**
  * @brief   Common TX IRQ handler.
@@ -327,13 +327,6 @@ static void serve_tx_interrupt(I2SDriver *i2sp) {
   I2S_TypeDef *i2s = i2sp->i2s;
   /* Reset interrupt flag */
 
-#if 0
-  if (i2cp->errors != I2C_NO_ERROR)
-    _i2c_wakeup_error_isr(i2cp);
-
-  if (i2cp->intstate == STATE_STOP)
-    _i2c_wakeup_isr(i2cp);
-#endif
 }
 
 /**
@@ -363,18 +356,43 @@ static void serve_rx_interrupt(I2SDriver *i2sp) {
       i2sp->i2s->RCSR |= I2Sx_RCSR_FEF;
   }
 
+}
 
+/**
+ * @brief   Common TX DMA IRQ handler.
+ * @note    Tries hard to clear all the pending interrupt sources, we don't
+ *          want to go through the whole ISR and have another interrupt soon
+ *          after.
+ *
+ * @param[in] i2sp         pointer to an I2SDriver
+ */
+static void serve_tx_dma_interrupt(I2SDriver *i2sp) {
 
-#if 0
-  if (i2cp->errors != I2C_NO_ERROR)
-    _i2c_wakeup_error_isr(i2cp);
+  I2S_TypeDef *i2s = i2sp->i2s;
 
-  if (i2cp->intstate == STATE_STOP)
-    _i2c_wakeup_isr(i2cp);
-#endif
+  /* DMA errors handling.*/
+  /* Callbacks handling, note it is portable code defined in the high
+     level driver.*/
+
+}
+
+/**
+ * @brief   Common RX DMA IRQ handler.
+ * @note    Tries hard to clear all the pending interrupt sources, we don't
+ *          want to go through the whole ISR and have another interrupt soon
+ *          after.
+ *
+ * @param[in] i2sp         pointer to an I2SDriver
+ */
+static void serve_rx_dma_interrupt(I2SDriver *i2sp) {
+
+  I2S_TypeDef *i2s = i2sp->i2s;
+  /* Reset interrupt flag */
+
 }
 
 
+#endif
 
 
 /*===========================================================================*/
@@ -382,56 +400,76 @@ static void serve_rx_interrupt(I2SDriver *i2sp) {
 /*===========================================================================*/
 #if KINETIS_I2S_USE_I2S0 || defined(__DOXYGEN__)
 
+#if 0
 OSAL_IRQ_HANDLER(KINETIS_I2S0_TX_IRQ_VECTOR) {
   OSAL_IRQ_PROLOGUE();
-  serve_tx_interrupt(&I2CD0);
+  serve_tx_interrupt(&I2SD0);
   PORT_IRQ_EPILOGUE();
 }
 
 OSAL_IRQ_HANDLER(KINETIS_I2S0_RX_IRQ_VECTOR) {
   OSAL_IRQ_PROLOGUE();
-  serve_rx_interrupt(&I2CD0);
+  serve_rx_interrupt(&I2SD0);
   PORT_IRQ_EPILOGUE();
 }
-
+#endif
 
 OSAL_IRQ_HANDLER(KINETIS_I2S0_TX_DMA_CHANNEL_IRQ_VECTOR) {
   OSAL_IRQ_PROLOGUE();
-  serve_tx_dma_interrupt(&I2CD0);
+  /* Clear bit 0 in Interrupt Request Register (INT) by writing 0 to CINT */
+  DMA->CINT = KINETIS_I2S0_TX_DMA_CHANNEL;
+
+  /* RFI */
   PORT_IRQ_EPILOGUE();
 }
 
 OSAL_IRQ_HANDLER(KINETIS_I2S0_RX_IRQ_VECTOR) {
   OSAL_IRQ_PROLOGUE();
-  serve_rx_dma_interrupt(&I2CD0);
+  /* Clear bit 0 in Interrupt Request Register (INT) by writing 0 to CINT */
+  DMA->CINT = KINETIS_I2S0_RX_DMA_CHANNEL;
+
+  i2s_stop_xfer(&I2SD0);
+
+  _i2s_isr_code(&I2SD0);
   PORT_IRQ_EPILOGUE();
 }
 
 #endif
 
-#if KINETIS_I2C_USE_I2C1 || defined(__DOXYGEN__)
-
+#if KINETIS_I2S_USE_I2S1 || defined(__DOXYGEN__)
+#if 0
 OSAL_IRQ_HANDLER(KINETIS_I2S1_TX_IRQ_VECTOR) {
   PORT_IRQ_PROLOGUE();
-  serve_tx_interrupt(&I2CD1);
+  serve_tx_interrupt(&I2SD1);
   PORT_IRQ_EPILOGUE();
 }
 
 OSAL_IRQ_HANDLER(KINETIS_I2S1_RX_IRQ_VECTOR) {
   PORT_IRQ_PROLOGUE();
-  serve_rx_interrupt(&I2CD1);
+  serve_rx_interrupt(&I2SD1);
   PORT_IRQ_EPILOGUE();
 }
+#endif
 
 OSAL_IRQ_HANDLER(KINETIS_I2S1_TX_DMA_CHANNEL_IRQ_VECTOR) {
   OSAL_IRQ_PROLOGUE();
-  serve_tx_dma_interrupt(&I2CD1);
+  /* Clear bit 0 in Interrupt Request Register (INT) by writing 0 to CINT */
+  DMA->CINT = KINETIS_I2S1_TX_DMA_CHANNEL;
+
+  /* RFI */
+
   PORT_IRQ_EPILOGUE();
 }
 
 OSAL_IRQ_HANDLER(KINETIS_I2S1_RX_IRQ_VECTOR) {
   OSAL_IRQ_PROLOGUE();
-  serve_rx_dma_interrupt(&I2CD1);
+  /* Clear bit 0 in Interrupt Request Register (INT) by writing 0 to CINT */
+  DMA->CINT = KINETIS_I2S1_RX_DMA_CHANNEL;
+
+  i2sp_stop_xfer(&I2SD1);
+
+  _i2s_isr_code(&I2SD1);
+
   PORT_IRQ_EPILOGUE();
 }
 
@@ -451,12 +489,12 @@ OSAL_IRQ_HANDLER(KINETIS_I2S1_RX_IRQ_VECTOR) {
  */
 void i2s_lld_init(void) {
 
-#if PLATFORM_I2S_USE_I2S0
+#if KINETIS_I2S_USE_I2S0
   i2sObjectInit(&I2SD0);
 #endif
 
 
-#if PLATFORM_I2S_USE_I2S1
+#if KINETIS_I2S_USE_I2S1
   i2sObjectInit(&I2SD1);
 #endif
 }
@@ -470,48 +508,49 @@ void i2s_lld_init(void) {
  */
 void i2s_lld_start(I2SDriver *i2sp) {
 
-    /* If in stopped state then enables the SPI and DMA clocks.*/
+    /* If in stopped state then enables the I2S and DMA clocks.*/
     if (i2sp->state == I2S_STOP) {
         int i2sIdx = -1;
-        uint32_t srcAddr = NULL;
-        uint32_t dstAddr = NULL;
+        uint32_t srcAddr = (uint32_t) NULL;
+        uint32_t dstAddr = (uint32_t) NULL;
 
-#if PLATFORM_I2S_USE_I2S0
+#if KINETIS_I2S_USE_I2S0
         if (&I2SD0 == i2sp) {
-            i2sIdx  = I2S_INDEX_0;
-            srcAddr = (unit32_t)&I2SD0->RDR;
-            dstAddr = (unit32_t)&IS2D0->TDR;
+            i2sp->i2s = I2S0;
+            i2sIdx    = I2S_INDEX_0;
+            srcAddr   = (uint32_t)&I2SD0.i2s->RDR;
+            dstAddr   = (uint32_t)&I2SD0.i2s->TDR;
 
             SIM->SCGC6 |= SIM_SCGC6_I2S0;
+#if 0
             nvicEnableVector(I2S0_TX_IRQn, KINETIS_I2S_IRQ_PRIORITY);
             nvicEnableVector(I2S0_RX_IRQn, KINETIS_I2S_IRQ_PRIORITY);
+#endif
         }
 #endif
 
 
-#if PLATFORM_I2S_USE_I2S1
+#if KINETIS_I2S_USE_I2S1
         if (&I2SD1 == i2sp) {
-            i2sIdx = I2S_INDEX_1;
-            srcAddr = (unit32_t)&I2SD1->RDR;
-            dstAddr = (unit32_t)&IS2D1->TDR;
+            i2sp->i2s = I2S1;
+            i2sIdx    = I2S_INDEX_1;
+            srcAddr   = (unit32_t)&I2SD1.i2s->RDR;
+            dstAddr   = (unit32_t)&IS2D1.i2s->TDR;
 
             SIM->SCGC3 |= SIM_SCGC3_I2S1;
+#if 0
             nvicEnableVector(I2S1_TX_IRQn, KINETIS_I2S_IRQ_PRIORITY);
             nvicEnableVector(I2S1_RX_IRQn, KINETIS_I2S_IRQ_PRIORITY);
+#endif
         }
 #endif
 
 
-        chDbgAssert(i2sCtx != -1, "Invalid i2s instance");
-        if (i2sCtx == -1) {
-            return;
-        }
-
         nvicEnableVector(DMA0_IRQn + i2sDmaResources[i2sIdx].rxDmaSource,
-                                     i2sDmaResources[i2sIdx].rxDmaIrqPriority);
+                                     i2sDmaResources[i2sIdx].dmaIrqPriority);
 
         nvicEnableVector(DMA0_IRQn + i2sDmaResources[i2sIdx].txDmaSource,
-                                     i2sDmaResources[i2sIdx].txDmaIrqPriority);
+                                     i2sDmaResources[i2sIdx].dmaIrqPriority);
 
 
         if (i2sDmaResources[i2sIdx].dmaMux == 1) {
@@ -602,7 +641,7 @@ void i2s_lld_start(I2SDriver *i2sp) {
                            /* SW and FIFO Resets.  Enable interrupt on error. */
         i2sp->i2s->RCSR = I2Sx_RCSR_FR | I2Sx_RCSR_SR
                                         | I2Sx_RCSR_FEIE;
-        i2sp->i2s->RCR1 =  I2Sx_RCR1_TFW(3); /* Rx Watermark 3 */
+        i2sp->i2s->RCR1 =  I2Sx_RCR1_RFW(3); /* Rx Watermark 3 */
         i2sp->i2s->RCR2 =  I2Sx_RCR2_BCP; /* Active low, external bit clock */
         i2sp->i2s->RCR3 =  I2Sx_RCR3_RCE(1); /* RX Mono channel enabled. */
 
@@ -752,7 +791,7 @@ void i2s_lld_start(I2SDriver *i2sp) {
  */
 void i2s_lld_stop(I2SDriver *i2sp) {
 
-    /* If in ready state then disables the I2S clock.*/
+    /* If in ready state then disable the I2S clock.*/
     if (i2sp->state == I2S_READY) {
         int i2sIdx = -1;
 
@@ -761,30 +800,28 @@ void i2s_lld_stop(I2SDriver *i2sp) {
         i2sp->i2s->RCSR = I2Sx_RCSR_FR | I2Sx_RCSR_SR;
 
 
-#if PLATFORM_I2S_USE_I2S0
+#if KINETIS_I2S_USE_I2S0
         if (&I2SD0 == i2sp) {
             i2sIdx  = I2S_INDEX_0;
             SIM->SCGC6 &= ~SIM_SCGC6_I2S0;
+#if 0
             nvicDisableVector(I2S0_TX_IRQn);
             nvicDisableVector(I2S0_TX_IRQn);
+#endif
         }
 #endif
 
 
-
-#if PLATFORM_I2S_USE_I2S1
+#if KINETIS_I2S_USE_I2S1
         if (&I2SD1 == i2sp) {
             i2sIdx = I2S_INDEX_1;
             SIM->SCGC3 &= ~SIM_SCGC3_I2S1;
+#if 0
             nvicDisableVector(I2S1_TX_IRQn);
             nvicDisableVector(I2S1_TX_IRQn);
+#endif
         }
 #endif
-        chDbgAssert(i2sCtx != -1, "Invalid i2s instance");
-        if (i2sCtx == -1) {
-            return;
-        }
-
         nvicDisableVector(DMA0_IRQn + i2sDmaResources[i2sIdx].rxDmaSource);
         nvicDisableVector(DMA0_IRQn + i2sDmaResources[i2sIdx].txDmaSource);
         SIM->SCGC7 &= ~SIM_SCGC7_DMA;
@@ -796,21 +833,67 @@ void i2s_lld_stop(I2SDriver *i2sp) {
  * @brief   Starts a I2S data exchange.
  *
  * @param[in] i2sp      pointer to the @p I2SDriver object
- * @param[in] n         number of words to be exchanged
- * @param[in] txbuf     the pointer to the transmit buffer
- * @param[out] rxbuf    the pointer to the receive buffer
- *
-
  *
  * @notapi
  */
-void i2s_lld_start_exchange(I2SDriver *i2sp, size_t n,
-                                             const void *txbuf, void *rxbuf) {
-    i2sp->count = n;
-    i2sp->rxbuf = rxbuf;
-    i2sp->txbuf = txbuf;
+void i2s_lld_start_exchange(I2SDriver *i2sp)
+{
+    int i2sIdx = -1;
+    int rxDmaCh;
+    int txDmaCh;
 
-    i2s_start_xfer(i2sp);
+#if KINETIS_I2S_USE_I2S0
+    if (&I2SD0 == i2sp) {
+        i2sIdx  = I2S_INDEX_0;
+    }
+#endif
+#if KINETIS_I2S_USE_I2S1
+    if (&I2SD1 == i2sp) {
+        i2sIdx = I2S_INDEX_1;
+    }
+#endif
+
+    rxDmaCh = i2sDmaResources[i2sIdx].rxDmaSource;
+    txDmaCh = i2sDmaResources[i2sIdx].txDmaSource;
+
+
+    /* Flush RX FIFO */
+    i2sp->i2s->RCSR |= I2Sx_RCSR_FR;
+
+    /* Configure RX DMA */
+    if (i2sp->config->rx_buffer) {
+        DMA->TCD[rxDmaCh].DADDR = (uint32_t)i2sp->config->rx_buffer;
+        DMA->TCD[rxDmaCh].DOFF  = I2S_WORD_SIZE;
+    } else {
+        DMA->TCD[rxDmaCh].DADDR = (uint32_t)&dmaRxDummy;
+        DMA->TCD[rxDmaCh].DOFF = 0;
+    }
+    DMA->TCD[rxDmaCh].BITER_ELINKNO = i2sp->config->size;
+    DMA->TCD[rxDmaCh].CITER_ELINKNO = i2sp->config->size;
+
+    /* Enable Request Register (ERQ) for RX by writing 0 to SERQ */
+    DMA->SERQ = rxDmaCh;
+
+    /* Configure TX DMA */
+    if (i2sp->config->tx_buffer) {
+        DMA->TCD[txDmaCh].SADDR =  (uint32_t)i2sp->config->tx_buffer;
+        DMA->TCD[txDmaCh].SOFF  = I2S_WORD_SIZE;
+    } else {
+        DMA->TCD[txDmaCh].SADDR =  (uint32_t)&dmaTxDummy;
+        DMA->TCD[txDmaCh].SOFF = 0;
+    }
+    DMA->TCD[txDmaCh].BITER_ELINKNO = i2sp->config->size;
+    DMA->TCD[txDmaCh].CITER_ELINKNO = i2sp->config->size;
+
+    /* Enable Request Register (ERQ) for TX by writing 1 to SERQ */
+    DMA->SERQ = txDmaCh;
+
+    /* Enable DMA requests */
+    i2sp->i2s->RCSR |= I2Sx_RCSR_FWDE | I2Sx_RCSR_FRDE;
+
+    /* Enable RX */
+    i2sp->i2s->RCSR |= I2Sx_RCSR_RE;
+
 }
 
 /**
@@ -823,8 +906,11 @@ void i2s_lld_start_exchange(I2SDriver *i2sp, size_t n,
  * @notapi
  */
 void i2s_lld_stop_exchange(I2SDriver *i2sp) {
+                                                    /* Halt RX in stop mode */
+        i2sp->i2s->RCSR &= ~I2Sx_RCSR_STOPE;
 
-  (void)i2sp;
+                                                      /* Disable DMA requests */
+        i2sp->i2s->RCSR &= ~(I2Sx_RCSR_FWDE | I2Sx_RCSR_FRDE);
 }
 
 #endif /* HAL_USE_I2S */

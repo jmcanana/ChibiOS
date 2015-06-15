@@ -2,7 +2,7 @@
     ChibiOS/HAL - Copyright (C) 2006,2007,2008,2009,2010,
                   2011,2012,2013,2014 Giovanni Di Sirio.
 
-    This file is part of ChibiOS/HAL 
+    This file is part of ChibiOS/HAL
 
     ChibiOS/HAL is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -133,7 +133,7 @@ typedef enum {
  *
  * @notapi
  */
-#define _i2s_isr_full_code(i2sp) {                                               \
+#define _i2s_isr_full_code(i2sp) {                                          \
   if ((i2sp)->config->end_cb) {                                             \
     (i2sp)->state = I2S_COMPLETE;                                           \
     (i2sp)->config->end_cb(i2sp,                                            \
@@ -145,6 +145,33 @@ typedef enum {
   else                                                                      \
     (i2sp)->state = I2S_READY;                                              \
 }
+
+/**
+ * @brief   Common ISR code.
+ * @details This code handles the portable part of the ISR code:
+ *          - Callback invocation.
+ *          - Waiting thread wakeup, if any.
+ *          - Driver state transitions.
+ *          .
+ * @note    This macro is meant to be used in the low level drivers
+ *          implementation only.
+ *
+ * @param[in] i2sp      pointer to the @p I2CDriver object
+ *
+ * @notapi
+ */
+#define _i2s_isr_code(i2sp) {                                               \
+  if ((i2sp)->config->end_cb) {                                             \
+    (i2sp)->state = I2S_COMPLETE;                                           \
+    (i2sp)->config->end_cb(i2sp, 0, (i2sp)->config->size);                  \
+    if ((i2sp)->state == I2S_COMPLETE)                                      \
+      (i2sp)->state = I2S_READY;                                            \
+  }                                                                         \
+  else                                                                      \
+    (i2sp)->state = I2S_READY;                                              \
+}
+
+
 /** @} */
 
 /*===========================================================================*/
