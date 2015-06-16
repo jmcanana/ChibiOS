@@ -92,8 +92,8 @@ const PALConfig pal_default_config =
                 /* PTA9*/ PAL_MODE_ALTERNATIVE_3,   /* ULPI_STP/[FTM1_CH1]/TRACE_D1 */
                 /*PTA10*/ PAL_MODE_OUTPUT_PUSHPULL,/* ULPI_DATA0, [Blue LED] */
                 /*PTA11*/ PAL_MODE_OUTPUT_PUSHPULL,/* ULPI_DATA1, [Orange LED] */
-                /*PTA12*/ PAL_MODE_UNCONNECTED,     /* RMII0_RXD1-MII0_RXD1/CAN_TX0 */
-                /*PTA13*/ PAL_MODE_UNCONNECTED,     /* RMII0_RXD0-MII0_RXD0/CAN_RX0 */
+                /*PTA12*/ PAL_MODE_ALTERNATIVE_6,   /* I2S0_TXD0 - Requires Jumper J21 pins 1,2 */
+                /*PTA13*/ PAL_MODE_ALTERNATIVE_6,   /* I2S0_TX_FS- Requires Jumper J22 pins 1,2 */
                 /*PTA14*/ PAL_MODE_UNCONNECTED,     /* RMII0_CRS_DV-MII0_RXDV */
                 /*PTA15*/ PAL_MODE_UNCONNECTED,     /* RMII0_TXEN-MII0_TXEN */
                 /*PTA16*/ PAL_MODE_UNCONNECTED,	    /* RMII0_TXD0-MII0_TXD0 */
@@ -234,13 +234,13 @@ const PALConfig pal_default_config =
                 /* PTE3*/ PAL_MODE_UNCONNECTED,	    /* SDHC0_CMD/SPI1_SOUT */
                 /* PTE4*/ PAL_MODE_UNCONNECTED,	    /* SDHC0_D3/SPI1_PCS0 */
                 /* PTE5*/ PAL_MODE_UNCONNECTED,	    /* SDHC0_D2/GPIO_E5 */
-                /* PTE6*/ PAL_MODE_UNCONNECTED,	    /* GPIO_E6/I2S0_MCLK */
-                /* PTE7*/ PAL_MODE_UNCONNECTED,	    /* AUD_SDATAI/GPIO_E7 */
+                /* PTE6*/ PAL_MODE_ALTERNATIVE_4,   /* I2S0_MCLK */
+                /* PTE7*/ PAL_MODE_ALTERNATIVE_4,   /* I2S0_RXD0 */
                 /* PTE8*/ PAL_MODE_ALTERNATIVE_3,   /* I2S0_RX_FS/[UART5_TXD] */
                 /* PTE9*/ PAL_MODE_ALTERNATIVE_3,   /* I2S0_RX_BCLK/[UART5_RXD] */
                 /*PTE10*/ PAL_MODE_UNCONNECTED,	    /* AUD_SDATAO/UART5_CTS_B */
                 /*PTE11*/ PAL_MODE_UNCONNECTED,	    /* I2S0_TX_FS/UART5_RTS_B */
-                /*PTE12*/ PAL_MODE_UNCONNECTED,	    /* I2S0_TX_BCLK/GPIO_E12 */
+                /*PTE12*/ PAL_MODE_ALTERNATIVE_4,   /* I2S0_TX_BCLK */
                 /*PTE13*/ PAL_MODE_UNCONNECTED,	    /* NC */
                 /*PTE14*/ PAL_MODE_UNCONNECTED,	    /* NC */
                 /*PTE15*/ PAL_MODE_UNCONNECTED,	    /* NC */

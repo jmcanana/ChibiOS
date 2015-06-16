@@ -521,7 +521,7 @@ int main(void) {
 
 
     /*
-     * Activates serial 1 (UART0) using the driver default configuration.
+     * Activates serial 6 (UART5) using the driver default configuration.
      */
     sdStart(&SD6, NULL);
 

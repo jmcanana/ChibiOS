@@ -642,7 +642,8 @@ void i2s_lld_start(I2SDriver *i2sp) {
         i2sp->i2s->RCSR = I2Sx_RCSR_FR | I2Sx_RCSR_SR
                                         | I2Sx_RCSR_FEIE;
         i2sp->i2s->RCR1 =  I2Sx_RCR1_RFW(3); /* Rx Watermark 3 */
-        i2sp->i2s->RCR2 =  I2Sx_RCR2_BCP; /* Active low, external bit clock */
+                             /* Active low, external bit clock.  Use TX_BCLK. */
+        i2sp->i2s->RCR2 =  I2Sx_RCR2_BCS |I2Sx_RCR2_BCP;
         i2sp->i2s->RCR3 =  I2Sx_RCR3_RCE(1); /* RX Mono channel enabled. */
 
         /* 32 word frame size.  MSB First.
@@ -892,7 +893,7 @@ void i2s_lld_start_exchange(I2SDriver *i2sp)
     i2sp->i2s->RCSR |= I2Sx_RCSR_FWDE | I2Sx_RCSR_FRDE;
 
     /* Enable RX */
-    i2sp->i2s->RCSR |= I2Sx_RCSR_RE;
+    i2sp->i2s->RCSR |= I2Sx_RCSR_RE | I2Sx_RCSR_STOPE | I2Sx_RCSR_DBGE;
 
 }
 
@@ -907,8 +908,9 @@ void i2s_lld_start_exchange(I2SDriver *i2sp)
  */
 void i2s_lld_stop_exchange(I2SDriver *i2sp) {
                                                     /* Halt RX in stop mode */
-        i2sp->i2s->RCSR &= ~I2Sx_RCSR_STOPE;
-
+        i2sp->i2s->RCSR &= ~(I2Sx_RCSR_RE
+                           | I2Sx_RCSR_STOPE
+                           | I2Sx_RCSR_DBGE);
                                                       /* Disable DMA requests */
         i2sp->i2s->RCSR &= ~(I2Sx_RCSR_FWDE | I2Sx_RCSR_FRDE);
 }

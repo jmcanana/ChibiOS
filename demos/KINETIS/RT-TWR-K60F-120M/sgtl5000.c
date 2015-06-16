@@ -18,8 +18,9 @@ I2CDriver *I2CD_PTR;
 /*===========================================================================*/
 #define SGTL5000_ADDR    0x0A  //(0x14 >> 1)
                                                             /* SYS_FS @ 48kHz */
-#define SYS_FS 48000000
+#define SYS_FS      48000
 
+                                                      /* SYS_MCLK @ 24.576MHz */
 #define SYS_MCLK 24576000
 
 #define VDDA_MV                 3300
@@ -534,11 +535,19 @@ int sgtlInit(I2CDriver *i2cp)
     /* --------------------System MCLK and Sample Clock-------------------- */
     regModify(REG_CHIP_CLK_CTRL,
             RATE_MODE_MASK << RATE_MODE_SHIFT, RATE_MODE_SYS_FS);
-    regModify(REG_CHIP_CLK_CTRL, SYS_FS_MASK << SYS_FS_SHIFT, SYS_FS_48KHZ);
+    if (SYS_FS == 44100) {
+        regModify(REG_CHIP_CLK_CTRL, SYS_FS_MASK << SYS_FS_SHIFT,
+                                                                SYS_FS_44_1KHZ);
+    }
+    else {
+        regModify(REG_CHIP_CLK_CTRL, SYS_FS_MASK << SYS_FS_SHIFT, SYS_FS_32KHZ);
+    }
 
-    /* MCLK_FREQ @ 256*Fs */
+#if 0
+    /* MCLK_FREQ @ 512*Fs */
     regModify(REG_CHIP_CLK_CTRL,
-            MCLK_FREQ_MASK << MCLK_FREQ_SHIFT, MCLK_FREQ_256_FS);
+            MCLK_FREQ_MASK << MCLK_FREQ_SHIFT, MCLK_FREQ_USE_PLL);
+#endif
 
     /* Configure the I2S clocks in master mode.
      * NOTE: I2S LRCLK is same as system sample clock.
@@ -567,7 +576,7 @@ int sgtlInit(I2CDriver *i2cp)
 
     /* Scale PLL */
     uint32_t pllOutputFreq;
-    if (SYS_FS == 44100000) {
+    if (SYS_FS == 44100) {
         pllOutputFreq = 180633600;
     }
     else {
@@ -585,6 +594,9 @@ int sgtlInit(I2CDriver *i2cp)
     regModify(REG_CHIP_ANA_POWER, 0, PLL_POWERUP);
     regModify(REG_CHIP_ANA_POWER, 0, VCOAMP_POWERUP);
 
+    /* MCLK_FREQ @ 512*Fs */
+    regModify(REG_CHIP_CLK_CTRL,
+            MCLK_FREQ_MASK << MCLK_FREQ_SHIFT, MCLK_FREQ_USE_PLL);
 
 
 
